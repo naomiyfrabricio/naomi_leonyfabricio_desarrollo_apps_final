@@ -1,0 +1,10 @@
+{
+  "name": "flashcards-calculo-logica",
+  "version": "0.1.0",
+  "description": "App de Flashcards para Repaso de Cálculo y Lógica — Nebula Code Studio",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "license": "UNLICENSED"
+}
