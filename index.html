@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flashcards · Cálculo y Lógica</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 640px; margin-inline: auto; color: #1f2933; }
+    h1 { font-size: 1.3rem; }
+    form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+    input, button { font-size: 1rem; padding: 10px; border-radius: 6px; border: 1px solid #9aa5b1; }
+    button { background: #2f5aa8; color: #fff; border: none; cursor: pointer; }
+    button:disabled { background: #9aa5b1; }
+    ul { list-style: none; padding: 0; display: grid; gap: 6px; }
+    ul button { width: 100%; text-align: left; background: #e4ecf7; color: #1f2933; }
+    .mensaje { min-height: 1.2em; margin: 4px 0 12px; }
+    .error { color: #b42318; } .ok { color: #1e7a3c; }
+    #tarjeta { border: 2px solid #2f5aa8; border-radius: 10px; padding: 20px; min-height: 140px; cursor: pointer; }
+    #respuesta { color: #2f5aa8; font-weight: 600; margin-top: 12px; }
+    .fila { display: flex; gap: 8px; margin-top: 8px; } .fila button { flex: 1; }
+  </style>
+</head>
+<body>
+  <h1>Flashcards · Cálculo y Lógica</h1>
+
+  <form id="form-mazo">
+    <input id="nombre-mazo" placeholder="Nombre del nuevo mazo" aria-label="Nombre del mazo">
+    <button type="submit">Crear mazo</button>
+  </form>
+  <p id="msg-mazo" class="mensaje"></p>
+  <ul id="lista-mazos"></ul>
+
+  <section id="seccion-mazo" hidden>
+    <h2 id="titulo-mazo"></h2>
+    <form id="form-tarjeta">
+      <input id="pregunta-in" placeholder="Pregunta" aria-label="Pregunta">
+      <input id="respuesta-in" placeholder="Respuesta" aria-label="Respuesta">
+      <button type="submit">Añadir tarjeta</button>
+    </form>
+    <p id="msg-tarjeta" class="mensaje"></p>
+    <button id="btn-estudiar" type="button">Estudiar este mazo</button>
+  </section>
+
+  <section id="seccion-estudio" hidden>
+    <p id="posicion"></p>
+    <div id="tarjeta"><div id="pregunta"></div><div id="respuesta"></div></div>
+    <div class="fila">
+      <button id="btn-revelar" type="button">Revelar respuesta</button>
+      <button id="btn-siguiente" type="button">Siguiente</button>
+    </div>
+  </section>
+
+  <script type="module" src="src/ui/app.js"></script>
+</body>
+</html>
