@@ -55,7 +55,12 @@ export function validarNombreMazo(nombre, mazosExistentes) {
 export class GestorMazos {
   constructor(almacenamiento) {
     this.almacenamiento = almacenamiento;
-    this._siguienteId = 1;
+  }
+
+  /** Siguiente id disponible, calculado a partir de lo ya guardado (no se repite al recargar). */
+  _siguienteId() {
+    const ids = this.almacenamiento.obtenerMazos().map((m) => m.id);
+    return ids.length === 0 ? 1 : Math.max(...ids) + 1;
   }
 
   /**
@@ -68,7 +73,7 @@ export class GestorMazos {
     if (!resultado.valido) {
       return { ok: false, error: resultado.error };
     }
-    const mazo = { id: this._siguienteId++, nombre: nombre.trim(), tarjetas: [] };
+    const mazo = { id: this._siguienteId(), nombre: nombre.trim(), tarjetas: [] };
     this.almacenamiento.guardarMazo(mazo);
     return { ok: true, mazo, mensaje: MENSAJES.MAZO_CREADO };
   }
