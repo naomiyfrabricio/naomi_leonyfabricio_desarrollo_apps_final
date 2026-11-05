@@ -44,6 +44,13 @@ test('LÍMITE CA-01: duplicado con distinta capitalización y espacios se rechaz
   assert.equal(gestor.listarMazos().length, 1);
 });
 
+test('LÍMITE CA-01: con mazos ya guardados, un gestor nuevo no repite ids', () => {
+  const alm = new AlmacenamientoMemoria();
+  new GestorMazos(alm).crearMazo('Lógica');
+  const r = new GestorMazos(alm).crearMazo('Derivadas');
+  assert.equal(r.mazo.id, 2);
+});
+
 // --- Casos de error ---
 test('ERROR CA-01: nombre vacío muestra error y no crea el mazo', () => {
   const gestor = nuevoGestor();
