@@ -15,6 +15,10 @@ export const MENSAJES = {
   NOMBRE_DUPLICADO: 'Ya existe un mazo con ese nombre. Elige otro.',
   NOMBRE_MUY_LARGO: `El nombre del mazo no puede tener más de ${LONGITUD_MAXIMA_NOMBRE} caracteres.`,
   MAZO_CREADO: 'Mazo creado correctamente.',
+  MAZO_RENOMBRADO: 'Nombre del mazo actualizado.',
+  MAZO_ELIMINADO: 'Mazo eliminado.',
+  MAZO_NO_EXISTE: 'El mazo seleccionado no existe.',
+  ELIMINACION_CANCELADA: 'Eliminación cancelada. No se borró nada.',
 };
 
 /**
@@ -30,10 +34,11 @@ export function normalizarNombre(nombre) {
 /**
  * Valida el nombre de un mazo contra los mazos existentes.
  * @param {unknown} nombre - Texto escrito por el usuario.
- * @param {Array<{nombre: string}>} mazosExistentes
+ * @param {Array<{id?: number, nombre: string}>} mazosExistentes
+ * @param {number} [idExcluido] - id del mazo que se está renombrando (no cuenta como duplicado de sí mismo).
  * @returns {{valido: boolean, error?: string}}
  */
-export function validarNombreMazo(nombre, mazosExistentes) {
+export function validarNombreMazo(nombre, mazosExistentes, idExcluido) {
   if (typeof nombre !== 'string' || nombre.trim() === '') {
     return { valido: false, error: MENSAJES.NOMBRE_VACIO };
   }
@@ -41,7 +46,9 @@ export function validarNombreMazo(nombre, mazosExistentes) {
     return { valido: false, error: MENSAJES.NOMBRE_MUY_LARGO };
   }
   const buscado = normalizarNombre(nombre);
-  const duplicado = mazosExistentes.some((m) => normalizarNombre(m.nombre) === buscado);
+  const duplicado = mazosExistentes.some(
+    (m) => m.id !== idExcluido && normalizarNombre(m.nombre) === buscado
+  );
   if (duplicado) {
     return { valido: false, error: MENSAJES.NOMBRE_DUPLICADO };
   }
@@ -76,6 +83,31 @@ export class GestorMazos {
     const mazo = { id: this._siguienteId(), nombre: nombre.trim(), tarjetas: [] };
     this.almacenamiento.guardarMazo(mazo);
     return { ok: true, mazo, mensaje: MENSAJES.MAZO_CREADO };
+  }
+
+  /**
+   * Cambia el nombre de un mazo (RF-02). Guardar el mismo nombre no es duplicado (CA-06).
+   * @returns {{ok: true, mazo: object, mensaje: string} | {ok: false, error: string}}
+   */
+  renombrarMazo(id, nuevoNombre) {
+    const mazos = this.almacenamiento.obtenerMazos();
+    const mazo = mazos.find((m) => m.id === id);
+    if (!mazo) return { ok: false, error: MENSAJES.MAZO_NO_EXISTE };
+    const r = validarNombreMazo(nuevoNombre, mazos, id);
+    if (!r.valido) return { ok: false, error: r.error };
+    const actualizado = { ...mazo, nombre: nuevoNombre.trim() };
+    this.almacenamiento.actualizarMazo(actualizado);
+    return { ok: true, mazo: actualizado, mensaje: MENSAJES.MAZO_RENOMBRADO };
+  }
+
+  /**
+   * Elimina un mazo con sus tarjetas y registros (RF-03). Solo borra si `confirmado` es true.
+   * @returns {{ok: true, mensaje: string} | {ok: false, cancelado?: true, error: string}}
+   */
+  eliminarMazo(id, confirmado) {
+    if (confirmado !== true) return { ok: false, cancelado: true, error: MENSAJES.ELIMINACION_CANCELADA };
+    if (!this.almacenamiento.eliminarMazo(id)) return { ok: false, error: MENSAJES.MAZO_NO_EXISTE };
+    return { ok: true, mensaje: MENSAJES.MAZO_ELIMINADO };
   }
 
   /** Devuelve la lista principal de mazos (para que aparezcan de inmediato, CA-01). */
