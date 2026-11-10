@@ -4,7 +4,15 @@
 **Equipo desarrollador:** Nebula Code Studio (Naomi y Fabricio, según especificación v2.0)  
 **Versión del plan:** borrador para publicación con distribución de RF aprobada por el equipo  
 **Fuentes:** `Requerimientos_Flashcards_v2.pdf`, secciones 1–12; guía `plan_incremental.pdf`, fase A.  
-**Estado de ejecución al 10 nov 2026:** incrementos 1, 2 y 3 terminados e integrados en `main` (tags v0.1.0, v0.2.0, v0.3.0; 53 de 53 pruebas pasan). Incremento 4 pendiente, planeado para la semana 15.
+**Estado de ejecución al 10 nov 2026 (cierre de la semana 13):**
+
+| Indicador | Valor | Detalle |
+|---|---|---|
+| Avance programado | **50 %** | Incrementos 1 (semana 12) y 2 (semana 13) terminados: se cumple el calendario. |
+| Avance real implementado | **75 %** | El incremento 3, programado para la semana 14, se terminó anticipadamente el 10 nov (tag v0.3.0). |
+| Incremento 4 | No iniciado | Programado para la semana 15 (23–29 nov). |
+
+Tags en `main`: v0.1.0, v0.2.0 y v0.3.0; 53 de 53 pruebas pasan.
 
 ## 1. Criterios y alcance
 
@@ -181,6 +189,7 @@ No marcar como cumplido hasta contar con evidencia:
 | 2026-11-05 | Se documenta la distribución de RF-01 a RF-12 en cuatro incrementos. | Reparto explícito comunicado por el equipo. | Equipo |
 | 2026-11-10 | Se fija el calendario: un incremento por semana del curso (semanas 12 a 15, cierres 5, 15, 22 y 29 nov). | El plan no tenía fechas de cierre; se necesitan para comparar lo planeado con lo real. | Equipo |
 | 2026-11-10 | Se registran los cierres reales de los incrementos 1 a 3 y el estado de cada RF. | Reporte de avance de la sesión 1 de implementación. | Equipo |
+| 2026-11-10 | Se distingue el avance programado (50 % al cierre de la semana 13) del real (75 %). El incremento 3 queda registrado como terminado anticipadamente; el 4 se mantiene en la semana 15. | Reportar el cumplimiento del calendario académico sin ocultar el trabajo adelantado. | Equipo |
 
 ## 11. Referencias de la especificación
 
