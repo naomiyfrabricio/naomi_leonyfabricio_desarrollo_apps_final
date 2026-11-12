@@ -32,4 +32,11 @@ export class AlmacenamientoMemoria {
     this._mazos[i] = { ...mazo, tarjetas: [...mazo.tarjetas] };
     return true;
   }
+
+  /** Elimina un mazo por id (con sus tarjetas y registros). Devuelve false si no existe. */
+  eliminarMazo(id) {
+    const antes = this._mazos.length;
+    this._mazos = this._mazos.filter((m) => m.id !== id);
+    return this._mazos.length < antes;
+  }
 }

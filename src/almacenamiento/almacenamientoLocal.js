@@ -42,6 +42,15 @@ export class AlmacenamientoLocal {
     return true;
   }
 
+  /** Elimina un mazo por id (con sus tarjetas y registros). Devuelve false si no existe. */
+  eliminarMazo(id) {
+    const mazos = this.obtenerMazos();
+    const restantes = mazos.filter((m) => m.id !== id);
+    if (restantes.length === mazos.length) return false;
+    this._escribir(restantes);
+    return true;
+  }
+
   _escribir(mazos) {
     this.storage.setItem(CLAVE_MAZOS, JSON.stringify(mazos));
   }
