@@ -6,11 +6,13 @@ import { GestorMazos } from '../mazos/gestorMazos.js';
 import { GestorTarjetas } from '../tarjetas/gestorTarjetas.js';
 import { SesionEstudio } from '../estudio/sesionEstudio.js';
 import { Estadisticas } from '../estadisticas/estadisticas.js';
+import { IntercambioMazos } from '../intercambio/intercambioMazos.js';
 
 export function crearControlador(almacenamiento) {
   const mazos = new GestorMazos(almacenamiento);
   const tarjetas = new GestorTarjetas(almacenamiento);
   const estadisticas = new Estadisticas(almacenamiento);
+  const intercambio = new IntercambioMazos(almacenamiento);
   const buscarMazo = (id) => mazos.listarMazos().find((m) => m.id === id);
 
   return {
@@ -31,5 +33,8 @@ export function crearControlador(almacenamiento) {
       return m.ok ? estadisticas.registrar(mazoId, m.registro) : m;
     },
     resumen: (mazoId) => estadisticas.resumen(mazoId),
+    // Intercambio por archivo (RF-10, RF-12)
+    exportarMazo: (mazoId) => intercambio.exportarMazo(mazoId),
+    importarMazo: (contenidoTexto) => intercambio.importarMazo(contenidoTexto),
   };
 }

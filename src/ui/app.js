@@ -116,6 +116,34 @@ $('form-renombrar').onsubmit = (e) => {
   refrescar();
 };
 
+$('btn-exportar-mazo').onclick = () => {
+  const r = app.exportarMazo(mazoActual);
+  if (!r.ok) { mostrarMensaje($('msg-tarjeta'), r.error, true); return; }
+  const blob = new Blob([r.contenido], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = r.nombreArchivo;
+  a.click();
+  URL.revokeObjectURL(url);
+  mostrarMensaje($('msg-tarjeta'), 'Mazo exportado correctamente.', false);
+};
+
+$('form-importar').onsubmit = (e) => {
+  e.preventDefault();
+  const input = $('archivo-importar');
+  const archivo = input.files[0];
+  if (!archivo) { mostrarMensaje($('msg-importar'), 'Selecciona un archivo .json para importar.', true); return; }
+  const lector = new FileReader();
+  lector.onload = () => {
+    const r = app.importarMazo(lector.result);
+    mostrarMensaje($('msg-importar'), r.ok ? r.mensaje : r.error, !r.ok);
+    if (r.ok) { input.value = ''; pintarMazos(); }
+  };
+  lector.onerror = () => mostrarMensaje($('msg-importar'), 'No se pudo leer el archivo.', true);
+  lector.readAsText(archivo);
+};
+
 $('btn-eliminar-mazo').onclick = () => {
   const r = app.eliminarMazo(mazoActual, window.confirm('¿Eliminar este mazo con todas sus tarjetas?'));
   if (r.ok) {
