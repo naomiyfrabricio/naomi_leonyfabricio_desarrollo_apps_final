@@ -4,15 +4,15 @@
 **Equipo desarrollador:** Nebula Code Studio (Naomi y Fabricio, según especificación v2.0)  
 **Versión del plan:** borrador para publicación con distribución de RF aprobada por el equipo  
 **Fuentes:** `Requerimientos_Flashcards_v2.pdf`, secciones 1–12; guía `plan_incremental.pdf`, fase A.  
-**Estado de ejecución al 10 nov 2026 (cierre de la semana 13):**
+**Estado de ejecución al 19 nov 2026:**
 
 | Indicador | Valor | Detalle |
 |---|---|---|
-| Avance programado | **50 %** | Incrementos 1 (semana 12) y 2 (semana 13) terminados: se cumple el calendario. |
-| Avance real implementado | **75 %** | El incremento 3, programado para la semana 14, se terminó anticipadamente el 10 nov (tag v0.3.0). |
-| Incremento 4 | No iniciado | Programado para la semana 15 (23–29 nov). |
+| Avance programado | **100 %** | Los 4 incrementos planeados están cubiertos. |
+| Avance real implementado | **100 %** | Los 4 incrementos están implementados, probados y publicados con tag en GitHub. |
+| Incremento 4 | **Cerrado (v0.4.0)** | RF-10 y RF-12 implementados; formato de intercambio decidido: JSON (ver §7). |
 
-Tags en `main`: v0.1.0, v0.2.0 y v0.3.0; 53 de 53 pruebas pasan.
+Tags en `main`: v0.1.0, v0.2.0, v0.3.0 y v0.4.0; 61 de 61 pruebas pasan.
 
 ## 1. Criterios y alcance
 
@@ -36,9 +36,9 @@ La especificación (§5) no asigna prioridades explícitas a los RF: se registra
 | RF-07 | Estudiar tarjetas de una en una y revelar respuesta. | RF | No indicada | RF-04 (mazo con tarjetas) | §5, CA-03 §8 | 2 | Implementado (v0.2.0) |
 | RF-08 | Registrar acierto o fallo por tarjeta estudiada. | RF | No indicada | RF-07 (modo estudio) | §5, CA-04 §8 | 3 | Implementado (v0.3.0) |
 | RF-09 | Calcular porcentaje acumulado de aciertos por mazo. | RF | No indicada | RF-08 (registros de estudio) | §5, CA-04 §8 | 3 | Implementado (v0.3.0) |
-| RF-10 | Exportar e importar mazos mediante archivo local. | RF | No indicada | RF-01, RF-04 (mazos y tarjetas) | §5, CA-05 §8 | 4 | Pendiente (incremento 4) |
+| RF-10 | Exportar e importar mazos mediante archivo local. | RF | No indicada | RF-01, RF-04 (mazos y tarjetas) | §5, CA-05 §8 | 4 | Implementado (v0.4.0) |
 | RF-11 | Impedir estudiar mazo vacío y mostrar aviso. | RF | No indicada | RF-01, RF-07 (mazo y acceso a estudio) | §5, CA-07 §8 | 2 | Implementado (v0.2.0) |
-| RF-12 | Rechazar importaciones corruptas sin cambiar los mazos. | RF | No indicada | RF-10 (importación) | §5, CA-05 §8 | 4 | Pendiente (incremento 4) |
+| RF-12 | Rechazar importaciones corruptas sin cambiar los mazos. | RF | No indicada | RF-10 (importación) | §5, CA-05 §8 | 4 | Implementado (v0.4.0) |
 
 **Cobertura:** 12/12 RF asignados exactamente una vez; 10/12 implementados al 10 nov 2026.  
 **Reparto aprobado:** Inc 1 = RF-01; Inc 2 = RF-04, RF-07, RF-11; Inc 3 = RF-02, RF-03, RF-05, RF-06, RF-08, RF-09; Inc 4 = RF-10, RF-12.
@@ -133,13 +133,13 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 | RF | RF-10, RF-12 (§5). |
 | HU | HU-05 (§7; RF-12 está asociado a HU-05 en matriz de trazabilidad §12). |
 | Criterios de aceptación | **CA-05 (§8):** exportar nombre y tarjetas; importar archivo válido conservando su contenido; ante archivo corrupto, mostrar error y no modificar mazos existentes. |
-| Módulos involucrados | Gestión de mazos y tarjetas, importación/exportación de archivo y persistencia local; validar estructura antes de importar (RNF-03, RNF-05 y RNF-09, §6). La especificación no define nombres de módulos/archivos concretos. |
-| Depende de | Inc. 1 y 2 para tener mazos y tarjetas; comportamiento del formato de archivo aún por definir (§9). |
-| Pruebas mínimas | Normal: exportar e importar en otro entorno y comparar nombre y tarjetas. Límite: mazo sin tarjetas (sin regla específica para formato/límites). Error: archivo corrupto o formato incorrecto, verificar integridad de los mazos previos. Regresión de Inc. 1–3. |
+| Módulos involucrados | `src/intercambio/intercambioMazos.js`: exportar/importar sobre la misma interfaz de persistencia (RNF-04, RNF-05, RNF-09, §6); valida la estructura del archivo antes de tocar el almacenamiento (RNF-03). |
+| Depende de | Inc. 1 y 2 para tener mazos y tarjetas. Formato de archivo definido: JSON con `{ nombre, tarjetas: [{ pregunta, respuesta }] }` (ver §7). |
+| Pruebas mínimas | Normal: exportar e importar en otro entorno y comparar nombre y tarjetas. Límite: mazo sin tarjetas. Error: JSON corrupto, nombre vacío/duplicado, tarjeta con campo vacío y archivo que no es un objeto; se verifica que los mazos previos no cambian. Regresión de Inc. 1–3. |
 | Rama Git | `incremento-4`. |
-| Tag esperado | `v0.4.0`. |
-| Fecha de cierre | Planeada: Semana 15 (23–29 nov), cierre 29 nov. **Real:** pendiente. |
-| Decisión del equipo | **Reparto aprobado**; formato de intercambio pendiente de definir (19–20 nov). |
+| Tag | `v0.4.0`. |
+| Fecha de cierre | 19 nov 2026. |
+| Decisión del equipo | **Reparto aprobado**; formato de intercambio: JSON (decisión registrada en §7). Implementado y probado (61/61 pruebas). |
 
 **Justificación del agrupamiento:** RF-12 protege la importación definida en RF-10 y ambos se verifican con CA-05 (§§5, 8 y 12).
 
@@ -150,7 +150,7 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 | Tema | Estado | Resolución acreditada o siguiente decisión requerida | Fuente |
 |---|---|---|---|
 | Distribución de los 12 RF | **Resuelto por el equipo** | Inc. 1: RF-01; Inc. 2: RF-04, RF-07, RF-11; Inc. 3: RF-02, RF-03, RF-05, RF-06, RF-08, RF-09; Inc. 4: RF-10, RF-12. | Reparto aprobado comunicado por el equipo. |
-| Formato de importación/exportación | **Pendiente** | Acordar formato exacto (JSON, CSV o texto plano) antes del diseño técnico de Inc. 4. | §9 |
+| Formato de importación/exportación | **Resuelto: JSON** | Se eligió JSON sobre el almacenamiento (`{ nombre, tarjetas: [{ pregunta, respuesta }] }`) porque es el mismo formato que ya usa `AlmacenamientoLocal` para persistir mazos, sin introducir un parser nuevo. La validación de estructura (RF-12, RNF-03) rechaza JSON malformado, mazos sin nombre válido o sin la forma esperada antes de modificar el almacenamiento. | Decisión de implementación del incremento 4. |
 | Máximo de tarjetas y de mazos | **Pendiente** | Determinar si existen límites y cómo afectan al rendimiento. | §9 |
 | Símbolos lógicos especiales | **Pendiente** | Decidir si se requiere soporte de entrada especial; no agregar funciones fuera de alcance sin aprobación. | §9 |
 | Pérdida de información local | **Riesgo identificado; decisión pendiente** | Definir si se mostrará advertencia de pérdida de información; la especificación la recomienda. | §9 |
