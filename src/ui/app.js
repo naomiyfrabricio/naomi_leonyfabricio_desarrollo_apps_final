@@ -28,7 +28,28 @@ function pintarMazos() {
   for (const m of app.listarMazos()) {
     const li = document.createElement('li');
     const pct = app.resumen(m.id).porcentaje;
-    li.appendChild(boton(`${m.nombre} (${m.tarjetas.length}) · ${pct} %`, () => abrirMazo(m.id)));
+
+    const nombre = document.createElement('span');
+    nombre.className = 'mazo-nombre';
+    nombre.textContent = m.nombre;
+
+    const meta = document.createElement('span');
+    meta.className = 'mazo-meta';
+    meta.textContent = `${m.tarjetas.length} tarjeta(s)`;
+
+    const info = document.createElement('span');
+    info.append(nombre, document.createElement('br'), meta);
+
+    const badge = document.createElement('span');
+    badge.className = 'mazo-badge';
+    badge.textContent = `${pct} %`;
+
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.append(info, badge);
+    b.onclick = () => abrirMazo(m.id);
+
+    li.appendChild(b);
     lista.appendChild(li);
   }
 }

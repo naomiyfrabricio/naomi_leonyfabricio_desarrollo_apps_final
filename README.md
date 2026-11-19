@@ -37,6 +37,18 @@ python -m http.server 8000
 
 y abrir http://localhost:8000 en Chrome, Firefox o Edge.
 
+## Manual breve (RNF-08)
+
+1. **Crear un mazo:** escribe un nombre en "Crear un mazo" y pulsa **Crear mazo**. El nombre no puede estar vacío ni repetir uno ya existente.
+2. **Abrir un mazo:** haz clic en su tarjeta dentro de "Tus mazos" para ver sus tarjetas y su porcentaje de aciertos.
+3. **Añadir tarjetas:** dentro del mazo, llena **Pregunta** y **Respuesta** y pulsa **Añadir tarjeta**. Para editar una tarjeta existente usa **Editar**, que carga sus datos en el formulario; **Eliminar** la borra pidiendo confirmación.
+4. **Renombrar o eliminar el mazo:** en "Datos del mazo", usa **Renombrar** o **Eliminar mazo** (también pide confirmación y borra sus tarjetas).
+5. **Estudiar:** pulsa **Estudiar este mazo**. Verás la pregunta; pulsa **Revelar respuesta** (o toca la tarjeta) y luego marca **Acerté** o **Fallé**. **Siguiente** avanza a la próxima tarjeta. El avance se refleja de inmediato en el porcentaje del mazo.
+6. **Exportar un mazo:** dentro del mazo, pulsa **Exportar este mazo** para descargar un archivo `.json` con su nombre y tarjetas.
+7. **Importar un mazo:** en "Importar desde archivo" (arriba de la lista de mazos), selecciona un archivo `.json` exportado previamente y pulsa **Importar mazo desde archivo**. Si el archivo está corrupto o mal formado, se muestra un error y no se modifica ningún mazo existente.
+
+Todos los datos se guardan en el `localStorage` del navegador: funcionan sin conexión y persisten al recargar la página, pero son propios de ese navegador y ese dispositivo (no se sincronizan entre equipos salvo exportando/importando el archivo).
+
 ## Pruebas
 
 Requiere Node.js 18 o superior, sin dependencias.

@@ -61,15 +61,15 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 
 ### 2.2 Historias de usuario y criterios de aceptación
 
-| HU | RF relacionados (§7, §12) | CA (§8) | Incremento asociado |
-|---|---|---|---|
-| HU-01 | RF-01 | CA-01 | 1 |
-| HU-02 | RF-04 | CA-02 | 2 |
-| HU-03 | RF-07 | CA-03 | 2 |
-| HU-04 | RF-08, RF-09 | CA-04 | 3 |
-| HU-05 | RF-10 y, por matriz de trazabilidad, RF-12 | CA-05 | 4 |
-| HU-06 | RF-02, RF-03, RF-05, RF-06 | CA-06 | 3 |
-| HU-07 | RF-11 | CA-07 | 2 |
+| HU | RF relacionados (§7, §12) | CA (§8) | Incremento asociado | Estado verificable |
+|---|---|---|---|---|
+| HU-01 | RF-01 | CA-01 | 1 | Implementado (v0.1.0) |
+| HU-02 | RF-04 | CA-02 | 2 | Implementado (v0.2.0) |
+| HU-03 | RF-07 | CA-03 | 2 | Implementado (v0.2.0) |
+| HU-04 | RF-08, RF-09 | CA-04 | 3 | Implementado (v0.3.0) |
+| HU-05 | RF-10 y, por matriz de trazabilidad, RF-12 | CA-05 | 4 | Implementado (v0.4.0) |
+| HU-06 | RF-02, RF-03, RF-05, RF-06 | CA-06 | 3 | Implementado (v0.3.0) |
+| HU-07 | RF-11 | CA-07 | 2 | Implementado (v0.2.0) |
 
 ## 3. Incremento 1 — v0.1.0
 
