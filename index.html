@@ -35,6 +35,13 @@
     <button type="submit">Crear mazo</button>
   </form>
   <p id="msg-mazo" class="mensaje"></p>
+
+  <form id="form-importar">
+    <input id="archivo-importar" type="file" accept="application/json,.json" aria-label="Archivo de mazo a importar">
+    <button type="submit" class="secundario">Importar mazo desde archivo</button>
+  </form>
+  <p id="msg-importar" class="mensaje"></p>
+
   <ul id="lista-mazos"></ul>
 
   <section id="seccion-mazo" hidden>
@@ -47,6 +54,7 @@
         <button type="button" id="btn-eliminar-mazo" class="peligro">Eliminar mazo</button>
       </div>
     </form>
+    <button type="button" id="btn-exportar-mazo" class="secundario">Exportar este mazo</button>
     <ul id="lista-tarjetas"></ul>
     <form id="form-tarjeta">
       <input id="pregunta-in" placeholder="Pregunta" aria-label="Pregunta">
