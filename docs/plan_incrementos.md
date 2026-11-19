@@ -4,7 +4,15 @@
 **Equipo desarrollador:** Nebula Code Studio (Naomi y Fabricio, según especificación v2.0)  
 **Versión del plan:** borrador para publicación con distribución de RF aprobada por el equipo  
 **Fuentes:** `Requerimientos_Flashcards_v2.pdf`, secciones 1–12; guía `plan_incremental.pdf`, fase A.  
-**Estado de ejecución:** no verificado: no se proporcionaron rama, commits, resultados de pruebas ni acta de cierre. Las fichas describen trabajo planificado, no evidencia de implementación.
+**Estado de ejecución al 10 nov 2026 (cierre de la semana 13):**
+
+| Indicador | Valor | Detalle |
+|---|---|---|
+| Avance programado | **50 %** | Incrementos 1 (semana 12) y 2 (semana 13) terminados: se cumple el calendario. |
+| Avance real implementado | **75 %** | El incremento 3, programado para la semana 14, se terminó anticipadamente el 10 nov (tag v0.3.0). |
+| Incremento 4 | No iniciado | Programado para la semana 15 (23–29 nov). |
+
+Tags en `main`: v0.1.0, v0.2.0 y v0.3.0; 53 de 53 pruebas pasan.
 
 ## 1. Criterios y alcance
 
@@ -15,24 +23,24 @@
 
 ## 2. Inventario de requerimientos funcionales
 
-La especificación (§5) no asigna prioridades explícitas a los RF: se registra **«No indicada»**. La columna «Dependencia» identifica solo prerequisitos funcionales deducibles de las funciones descritas; no equivale a prioridad formal. «Asignado» significa incluido en el plan, **no implementado**.
+La especificación (§5) no asigna prioridades explícitas a los RF: se registra **«No indicada»**. La columna «Dependencia» identifica solo prerequisitos funcionales deducibles de las funciones descritas; no equivale a prioridad formal. La última columna indica el estado verificado con pruebas y tag en GitHub.
 
 | ID | Descripción breve | Tipo | Prioridad | Dependencia funcional | Fuente | Incremento | Estado verificable |
 |---|---|---|---|---|---|---|---|
-| RF-01 | Crear mazo; rechazar nombre vacío o duplicado. | RF | No indicada | Ninguna indicada | §5, CA-01 §8 | 1 | Asignado; implementación por verificar |
-| RF-02 | Editar nombre de mazo sin duplicados ni vacío. | RF | No indicada | RF-01 (mazo existente) | §5, CA-06 §8 | 3 | Asignado; implementación por verificar |
-| RF-03 | Eliminar mazo y tarjetas con confirmación. | RF | No indicada | RF-01 (mazo existente) | §5, CA-06 §8 | 3 | Asignado; implementación por verificar |
-| RF-04 | Añadir tarjeta con pregunta y respuesta no vacías. | RF | No indicada | RF-01 (mazo existente) | §5, CA-02 §8 | 2 | Asignado; implementación por verificar |
-| RF-05 | Editar pregunta o respuesta de tarjeta existente. | RF | No indicada | RF-04 (tarjeta existente) | §5, CA-06 §8 | 3 | Asignado; implementación por verificar |
-| RF-06 | Eliminar tarjeta con confirmación. | RF | No indicada | RF-04 (tarjeta existente) | §5, CA-06 §8 | 3 | Asignado; implementación por verificar |
-| RF-07 | Estudiar tarjetas de una en una y revelar respuesta. | RF | No indicada | RF-04 (mazo con tarjetas) | §5, CA-03 §8 | 2 | Asignado; implementación por verificar |
-| RF-08 | Registrar acierto o fallo por tarjeta estudiada. | RF | No indicada | RF-07 (modo estudio) | §5, CA-04 §8 | 3 | Asignado; implementación por verificar |
-| RF-09 | Calcular porcentaje acumulado de aciertos por mazo. | RF | No indicada | RF-08 (registros de estudio) | §5, CA-04 §8 | 3 | Asignado; implementación por verificar |
-| RF-10 | Exportar e importar mazos mediante archivo local. | RF | No indicada | RF-01, RF-04 (mazos y tarjetas) | §5, CA-05 §8 | 4 | Asignado; implementación por verificar |
-| RF-11 | Impedir estudiar mazo vacío y mostrar aviso. | RF | No indicada | RF-01, RF-07 (mazo y acceso a estudio) | §5, CA-07 §8 | 2 | Asignado; implementación por verificar |
-| RF-12 | Rechazar importaciones corruptas sin cambiar los mazos. | RF | No indicada | RF-10 (importación) | §5, CA-05 §8 | 4 | Asignado; implementación por verificar |
+| RF-01 | Crear mazo; rechazar nombre vacío o duplicado. | RF | No indicada | Ninguna indicada | §5, CA-01 §8 | 1 | Implementado (v0.1.0) |
+| RF-02 | Editar nombre de mazo sin duplicados ni vacío. | RF | No indicada | RF-01 (mazo existente) | §5, CA-06 §8 | 3 | Implementado (v0.3.0) |
+| RF-03 | Eliminar mazo y tarjetas con confirmación. | RF | No indicada | RF-01 (mazo existente) | §5, CA-06 §8 | 3 | Implementado (v0.3.0) |
+| RF-04 | Añadir tarjeta con pregunta y respuesta no vacías. | RF | No indicada | RF-01 (mazo existente) | §5, CA-02 §8 | 2 | Implementado (v0.2.0) |
+| RF-05 | Editar pregunta o respuesta de tarjeta existente. | RF | No indicada | RF-04 (tarjeta existente) | §5, CA-06 §8 | 3 | Implementado (v0.3.0) |
+| RF-06 | Eliminar tarjeta con confirmación. | RF | No indicada | RF-04 (tarjeta existente) | §5, CA-06 §8 | 3 | Implementado (v0.3.0) |
+| RF-07 | Estudiar tarjetas de una en una y revelar respuesta. | RF | No indicada | RF-04 (mazo con tarjetas) | §5, CA-03 §8 | 2 | Implementado (v0.2.0) |
+| RF-08 | Registrar acierto o fallo por tarjeta estudiada. | RF | No indicada | RF-07 (modo estudio) | §5, CA-04 §8 | 3 | Implementado (v0.3.0) |
+| RF-09 | Calcular porcentaje acumulado de aciertos por mazo. | RF | No indicada | RF-08 (registros de estudio) | §5, CA-04 §8 | 3 | Implementado (v0.3.0) |
+| RF-10 | Exportar e importar mazos mediante archivo local. | RF | No indicada | RF-01, RF-04 (mazos y tarjetas) | §5, CA-05 §8 | 4 | Pendiente (incremento 4) |
+| RF-11 | Impedir estudiar mazo vacío y mostrar aviso. | RF | No indicada | RF-01, RF-07 (mazo y acceso a estudio) | §5, CA-07 §8 | 2 | Implementado (v0.2.0) |
+| RF-12 | Rechazar importaciones corruptas sin cambiar los mazos. | RF | No indicada | RF-10 (importación) | §5, CA-05 §8 | 4 | Pendiente (incremento 4) |
 
-**Cobertura:** 12/12 RF asignados exactamente una vez.  
+**Cobertura:** 12/12 RF asignados exactamente una vez; 10/12 implementados al 10 nov 2026.  
 **Reparto aprobado:** Inc 1 = RF-01; Inc 2 = RF-04, RF-07, RF-11; Inc 3 = RF-02, RF-03, RF-05, RF-06, RF-08, RF-09; Inc 4 = RF-10, RF-12.
 
 ### 2.1 Inventario de RNF transversales
@@ -76,8 +84,8 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 | Pruebas mínimas | Normal: crear y mostrar mazo único. Límite: nombre vacío. Error: nombre duplicado. Verificar persistencia local. |
 | Rama Git | `main` como línea base al cierre del incremento 1 (según guía). |
 | Tag esperado | `v0.1.0`. |
-| Fecha de cierre | No proporcionada. |
-| Decisión del equipo | **Reparto de RF aprobado**; implementación, aceptación y publicación por verificar. |
+| Fecha de cierre | Planeada: Semana 12 (2–8 nov), cierre 5 nov 13:00. **Real:** 5 nov, commit 8cd8ffe. |
+| Decisión del equipo | **Terminado** · tag v0.1.0 · 9 pruebas. |
 
 **Justificación del agrupamiento:** establecer mazos es requisito práctico para agregar tarjetas en el incremento 2 y editar/eliminar mazos en el 3 (§§5, 7 y 8).
 
@@ -94,8 +102,8 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 | Pruebas mínimas | Normal: añadir tarjeta válida, iniciar estudio y revelar respuesta. Límite: mazo vacío y campos de tarjeta vacíos. Error: impedir guardar tarjeta inválida. Medir revelado <500 ms. |
 | Rama Git | `incremento-2`. |
 | Tag esperado | `v0.2.0`. |
-| Fecha de cierre | No proporcionada. |
-| Decisión del equipo | **Reparto aprobado**; implementación, commits y resultados de pruebas no aportados. |
+| Fecha de cierre | Planeada: Semana 13 (9–15 nov), cierre 15 nov. **Real:** 5 nov, merge d40f6ab (10 días antes). |
+| Decisión del equipo | **Terminado** · tag v0.2.0 · 31 pruebas acumuladas. |
 
 **Justificación del agrupamiento:** las tres funciones forman un flujo de estudio utilizable de extremo a extremo; el manejo de mazos vacíos evita un flujo inválido (CA-02, CA-03 y CA-07, §8).
 
@@ -112,8 +120,8 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 | Pruebas mínimas | Normal: editar mazo/tarjeta, eliminar con confirmación, registrar acierto y fallo y comprobar porcentaje. Límite: mazo sin registros = 0 %. Error: edición de nombre inválido/duplicado y cancelación de borrado. Ejecutar regresión de Inc. 1 y 2. |
 | Rama Git | `incremento-3`. |
 | Tag esperado | `v0.3.0`. |
-| Fecha de cierre | No proporcionada. |
-| Decisión del equipo | **Reparto aprobado**; resultados y aprobación de cierre pendientes. |
+| Fecha de cierre | Planeada: Semana 14 (16–22 nov), cierre 22 nov. **Real:** 10 nov, merge c155c36 (12 días antes). |
+| Decisión del equipo | **Terminado** · tag v0.3.0 · 53 pruebas acumuladas. |
 
 **Justificación del agrupamiento:** la edición y eliminación dependen de entidades ya creadas; la estadística requiere primero un modo estudio y el registro de aciertos/fallos (RF-07 a RF-09, §5).
 
@@ -130,8 +138,8 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 | Pruebas mínimas | Normal: exportar e importar en otro entorno y comparar nombre y tarjetas. Límite: mazo sin tarjetas (sin regla específica para formato/límites). Error: archivo corrupto o formato incorrecto, verificar integridad de los mazos previos. Regresión de Inc. 1–3. |
 | Rama Git | `incremento-4`. |
 | Tag esperado | `v0.4.0`. |
-| Fecha de cierre | No proporcionada. |
-| Decisión del equipo | **Reparto aprobado**; formato de intercambio y evidencia de cierre pendientes. |
+| Fecha de cierre | Planeada: Semana 15 (23–29 nov), cierre 29 nov. **Real:** pendiente. |
+| Decisión del equipo | **Reparto aprobado**; formato de intercambio pendiente de definir (19–20 nov). |
 
 **Justificación del agrupamiento:** RF-12 protege la importación definida en RF-10 y ambos se verifican con CA-05 (§§5, 8 y 12).
 
@@ -148,8 +156,8 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 | Pérdida de información local | **Riesgo identificado; decisión pendiente** | Definir si se mostrará advertencia de pérdida de información; la especificación la recomienda. | §9 |
 | Tecnología de desarrollo | **Pendiente** | Confirmar web responsiva, Android nativo o multiplataforma para concretar RNF-06. | §9 |
 | Longitud máxima de pregunta/respuesta | **Pendiente** | Definir si existen límites de caracteres antes de establecer casos límite adicionales. | §9 |
-| Tiempo disponible y fecha de cierre | **Pendiente** | Confirmar calendario real, fechas e integrantes disponibles para la carga del proyecto. La especificación describe viabilidad de 8 semanas para 2 personas, pero no acredita semanas restantes a la fecha de este plan. | §3 y guía A3 |
-| Estado real de Inc. 1 y posteriores | **No verificado** | Obtener matriz de trazabilidad, hashes, resultados de pruebas y tags en GitHub. | Guía, fases B y C |
+| Tiempo disponible y fecha de cierre | **Resuelto por el equipo** | Un incremento por semana del curso: cierres 5, 15, 22 y 29 nov 2026 (semanas 12 a 15). | §3 y guía A3 |
+| Estado real de Inc. 1 a 3 | **Verificado** | Tags v0.1.0, v0.2.0 y v0.3.0 en `main`; 53 de 53 pruebas pasan; ver reporte de avance del 10 nov 2026. | Fases B y C |
 
 ## 8. Comprobación cruzada del plan (A4)
 
@@ -158,7 +166,7 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 - [x] La propuesta usa funciones descritas en la especificación (§5) y criterios de aceptación (§8); no añade funcionalidades de producto fuera de alcance.
 - [x] El orden respeta dependencias principales: RF-01 → RF-04 → RF-07 → RF-08 → RF-09 y RF-10 → RF-12.
 - [x] Cada objetivo describe una función ejecutable y verificable; que efectivamente sea ejecutable al cerrar cada versión requiere pruebas reales.
-- [ ] Confirmar que la carga es viable en las **semanas restantes reales**; ese dato no está disponible.
+- [x] Carga viable: calendario fijado por el equipo (semanas 12 a 15).
 - [ ] Resolver decisiones abiertas de §9 antes de que afecten la implementación.
 - [ ] Verificar resultados, revisión del equipo y aprobación final.
 
@@ -178,7 +186,10 @@ No marcar como cumplido hasta contar con evidencia:
 
 | Fecha | Cambio | Motivo | Aprobación |
 |---|---|---|---|
-| 2026-11-05 | Se documenta la distribución de RF-01 a RF-12 en cuatro incrementos. | Reparto explícito comunicado por el equipo. | Reparto aprobado por el equipo; publicación pendiente de verificar. |
+| 2026-11-05 | Se documenta la distribución de RF-01 a RF-12 en cuatro incrementos. | Reparto explícito comunicado por el equipo. | Equipo |
+| 2026-11-10 | Se fija el calendario: un incremento por semana del curso (semanas 12 a 15, cierres 5, 15, 22 y 29 nov). | El plan no tenía fechas de cierre; se necesitan para comparar lo planeado con lo real. | Equipo |
+| 2026-11-10 | Se registran los cierres reales de los incrementos 1 a 3 y el estado de cada RF. | Reporte de avance de la sesión 1 de implementación. | Equipo |
+| 2026-11-10 | Se distingue el avance programado (50 % al cierre de la semana 13) del real (75 %). El incremento 3 queda registrado como terminado anticipadamente; el 4 se mantiene en la semana 15. | Reportar el cumplimiento del calendario académico sin ocultar el trabajo adelantado. | Equipo |
 
 ## 11. Referencias de la especificación
 

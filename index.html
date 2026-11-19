@@ -7,18 +7,24 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; max-width: 640px; margin-inline: auto; color: #1f2933; }
-    h1 { font-size: 1.3rem; }
+    h1 { font-size: 1.3rem; } h2 { font-size: 1.1rem; }
     form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
     input, button { font-size: 1rem; padding: 10px; border-radius: 6px; border: 1px solid #9aa5b1; }
     button { background: #2f5aa8; color: #fff; border: none; cursor: pointer; }
-    button:disabled { background: #9aa5b1; }
+    button:disabled { background: #9aa5b1; cursor: default; }
+    button.secundario { background: #e4ecf7; color: #1f2933; }
+    button.peligro { background: #b42318; }
     ul { list-style: none; padding: 0; display: grid; gap: 6px; }
-    ul button { width: 100%; text-align: left; background: #e4ecf7; color: #1f2933; }
+    #lista-mazos button { width: 100%; text-align: left; background: #e4ecf7; color: #1f2933; }
+    .tarjeta-fila { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .tarjeta-fila span { flex: 1 1 100%; overflow-wrap: anywhere; }
+    .tarjeta-fila button { padding: 6px 10px; font-size: .9rem; }
     .mensaje { min-height: 1.2em; margin: 4px 0 12px; }
     .error { color: #b42318; } .ok { color: #1e7a3c; }
-    #tarjeta { border: 2px solid #2f5aa8; border-radius: 10px; padding: 20px; min-height: 140px; cursor: pointer; }
+    #tarjeta { border: 2px solid #2f5aa8; border-radius: 10px; padding: 20px; min-height: 140px; cursor: pointer; overflow-wrap: anywhere; }
     #respuesta { color: #2f5aa8; font-weight: 600; margin-top: 12px; }
     .fila { display: flex; gap: 8px; margin-top: 8px; } .fila button { flex: 1; }
+    #estadisticas { font-weight: 600; }
   </style>
 </head>
 <body>
@@ -33,10 +39,19 @@
 
   <section id="seccion-mazo" hidden>
     <h2 id="titulo-mazo"></h2>
+    <p id="estadisticas"></p>
+    <form id="form-renombrar">
+      <input id="nuevo-nombre" aria-label="Nuevo nombre del mazo">
+      <div class="fila">
+        <button type="submit" class="secundario">Renombrar</button>
+        <button type="button" id="btn-eliminar-mazo" class="peligro">Eliminar mazo</button>
+      </div>
+    </form>
+    <ul id="lista-tarjetas"></ul>
     <form id="form-tarjeta">
       <input id="pregunta-in" placeholder="Pregunta" aria-label="Pregunta">
       <input id="respuesta-in" placeholder="Respuesta" aria-label="Respuesta">
-      <button type="submit">Añadir tarjeta</button>
+      <button type="submit" id="btn-tarjeta">Añadir tarjeta</button>
     </form>
     <p id="msg-tarjeta" class="mensaje"></p>
     <button id="btn-estudiar" type="button">Estudiar este mazo</button>
@@ -49,6 +64,11 @@
       <button id="btn-revelar" type="button">Revelar respuesta</button>
       <button id="btn-siguiente" type="button">Siguiente</button>
     </div>
+    <div class="fila">
+      <button id="btn-acierto" type="button">Acierto</button>
+      <button id="btn-fallo" type="button" class="peligro">Fallo</button>
+    </div>
+    <p id="msg-estudio" class="mensaje ok"></p>
   </section>
 
   <script type="module" src="src/ui/app.js"></script>
