@@ -8,6 +8,22 @@ let mazoActual = null;
 let tarjetaEditando = null;
 let sesion = null;
 
+// Preferencia de tema claro/oscuro (solo UI, separado de los datos de mazos — RNF-09).
+const CLAVE_TEMA = 'flashcards.ui.tema';
+function aplicarTema(tema) {
+  if (tema) document.documentElement.setAttribute('data-theme', tema);
+  else document.documentElement.removeAttribute('data-theme');
+  $('btn-tema').textContent = tema === 'dark' ? '☀️' : '🌙';
+}
+aplicarTema(localStorage.getItem(CLAVE_TEMA));
+$('btn-tema').onclick = () => {
+  const prefiereOscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const actual = document.documentElement.getAttribute('data-theme') || (prefiereOscuro ? 'dark' : 'light');
+  const siguiente = actual === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(CLAVE_TEMA, siguiente);
+  aplicarTema(siguiente);
+};
+
 function mostrarMensaje(el, texto, esError) {
   el.textContent = texto;
   el.className = esError ? 'mensaje error' : 'mensaje ok';

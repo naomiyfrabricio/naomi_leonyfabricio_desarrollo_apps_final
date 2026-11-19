@@ -20,6 +20,38 @@
       --radio: 12px;
       --sombra: 0 1px 3px rgba(31, 41, 51, .08), 0 1px 2px rgba(31, 41, 51, .06);
     }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --azul: #5b8de0;
+        --azul-oscuro: #cfe0fa;
+        --azul-claro: #1e2a3f;
+        --borde: #33404f;
+        --texto: #e6eaf0;
+        --texto-suave: #9aa7b8;
+        --rojo: #ff8a80;
+        --rojo-claro: #3a2222;
+        --verde: #5fe0a0;
+        --fondo: #121722;
+        --superficie: #1a212e;
+        --sombra: 0 1px 3px rgba(0, 0, 0, .4), 0 1px 2px rgba(0, 0, 0, .3);
+      }
+    }
+    :root[data-theme="dark"] {
+      --azul: #5b8de0;
+      --azul-oscuro: #cfe0fa;
+      --azul-claro: #1e2a3f;
+      --borde: #33404f;
+      --texto: #e6eaf0;
+      --texto-suave: #9aa7b8;
+      --rojo: #ff8a80;
+      --rojo-claro: #3a2222;
+      --verde: #5fe0a0;
+      --fondo: #121722;
+      --superficie: #1a212e;
+      --sombra: 0 1px 3px rgba(0, 0, 0, .4), 0 1px 2px rgba(0, 0, 0, .3);
+    }
+
     * { box-sizing: border-box; }
     body {
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -30,11 +62,17 @@
       color: var(--texto);
       background: var(--fondo);
       line-height: 1.4;
+      transition: background .15s, color .15s;
     }
 
-    .app-header { text-align: center; margin-bottom: 20px; }
+    .app-header { position: relative; text-align: center; margin-bottom: 20px; }
     .app-header h1 { font-size: 1.4rem; margin: 0 0 4px; }
     .app-header p { margin: 0; color: var(--texto-suave); font-size: .9rem; }
+    #btn-tema {
+      position: absolute; top: 0; right: 0; width: auto;
+      background: var(--superficie); color: var(--texto); border-color: var(--borde);
+      padding: 8px 10px; font-size: 1rem; line-height: 1;
+    }
 
     .panel {
       background: var(--superficie);
@@ -95,7 +133,7 @@
     #lista-mazos .mazo-meta { font-size: .8rem; color: var(--texto-suave); font-weight: 400; }
     #lista-mazos .mazo-badge {
       flex: none; font-size: .8rem; font-weight: 700; color: var(--azul-oscuro);
-      background: #fff; border-radius: 999px; padding: 2px 10px;
+      background: var(--superficie); border-radius: 999px; padding: 2px 10px;
     }
     #lista-mazos .lista-vacia-aviso { color: var(--texto-suave); font-size: .9rem; padding: 4px 0; }
 
@@ -132,6 +170,7 @@
 </head>
 <body>
   <header class="app-header">
+    <button type="button" id="btn-tema" aria-label="Cambiar tema claro/oscuro">🌙</button>
     <h1>📚 Flashcards · Cálculo y Lógica</h1>
     <p>Crea mazos, repasa y lleva el control de tu avance.</p>
   </header>
