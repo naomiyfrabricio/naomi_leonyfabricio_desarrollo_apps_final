@@ -81,6 +81,9 @@
     .mensaje.error { color: var(--rojo); } .mensaje.ok { color: var(--verde); }
 
     /* Lista de mazos */
+    .toolbar-mazos { display: flex; gap: 8px; margin-bottom: 10px; }
+    .toolbar-mazos input { flex: 1 1 auto; min-width: 0; }
+    .toolbar-mazos select { flex: 0 0 auto; background: var(--fondo); max-width: 44%; }
     #lista-mazos { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
     #lista-mazos li { display: block; }
     #lista-mazos button {
@@ -94,10 +97,7 @@
       flex: none; font-size: .8rem; font-weight: 700; color: var(--azul-oscuro);
       background: #fff; border-radius: 999px; padding: 2px 10px;
     }
-    #lista-mazos:empty::after {
-      content: 'Aún no tienes mazos. Crea el primero arriba.';
-      color: var(--texto-suave); font-size: .9rem; display: block; padding: 4px 0;
-    }
+    #lista-mazos .lista-vacia-aviso { color: var(--texto-suave); font-size: .9rem; padding: 4px 0; }
 
     /* Detalle de mazo */
     #titulo-mazo { font-size: 1.15rem; margin: 0; }
@@ -154,7 +154,17 @@
 
   <section class="panel">
     <h2>🗂️ Tus mazos</h2>
+    <div class="toolbar-mazos">
+      <input id="buscar-mazo" type="search" placeholder="Buscar mazo por nombre..." aria-label="Buscar mazo">
+      <select id="ordenar-mazos" aria-label="Ordenar mazos">
+        <option value="nombre">Nombre (A-Z)</option>
+        <option value="porcentaje-desc">Avance (mayor a menor)</option>
+        <option value="porcentaje-asc">Avance (menor a mayor)</option>
+        <option value="tarjetas-desc">Tarjetas (más a menos)</option>
+      </select>
+    </div>
     <ul id="lista-mazos"></ul>
+    <p id="msg-buscar-mazo" class="mensaje"></p>
   </section>
 
   <section id="seccion-mazo" class="panel" hidden>

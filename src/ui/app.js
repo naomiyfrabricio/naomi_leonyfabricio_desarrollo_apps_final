@@ -22,12 +22,48 @@ function boton(texto, onClick, clase = '') {
   return b;
 }
 
+/** Quita acentos para que "calculo" encuentre "Cálculo" en el buscador. */
+function normalizarBusqueda(texto) {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function mazosFiltradosYOrdenados() {
+  const texto = normalizarBusqueda($('buscar-mazo').value.trim());
+  const orden = $('ordenar-mazos').value;
+
+  const mazos = app.listarMazos()
+    .filter((m) => normalizarBusqueda(m.nombre).includes(texto))
+    .map((m) => ({ mazo: m, porcentaje: app.resumen(m.id).porcentaje }));
+
+  const comparadores = {
+    nombre: (a, b) => a.mazo.nombre.localeCompare(b.mazo.nombre, 'es', { sensitivity: 'base' }),
+    'porcentaje-desc': (a, b) => b.porcentaje - a.porcentaje,
+    'porcentaje-asc': (a, b) => a.porcentaje - b.porcentaje,
+    'tarjetas-desc': (a, b) => b.mazo.tarjetas.length - a.mazo.tarjetas.length,
+  };
+  mazos.sort(comparadores[orden] || comparadores.nombre);
+  return mazos;
+}
+
 function pintarMazos() {
   const lista = $('lista-mazos');
   lista.innerHTML = '';
-  for (const m of app.listarMazos()) {
+  const filtrados = mazosFiltradosYOrdenados();
+  const texto = $('buscar-mazo').value.trim();
+  const hayMazos = app.listarMazos().length > 0;
+  $('msg-buscar-mazo').textContent =
+    hayMazos && texto && filtrados.length === 0 ? `Ningún mazo coincide con "${texto}".` : '';
+
+  if (!hayMazos) {
+    const aviso = document.createElement('li');
+    aviso.className = 'lista-vacia-aviso';
+    aviso.textContent = 'Aún no tienes mazos. Crea el primero arriba.';
+    lista.appendChild(aviso);
+    return;
+  }
+
+  for (const { mazo: m, porcentaje: pct } of filtrados) {
     const li = document.createElement('li');
-    const pct = app.resumen(m.id).porcentaje;
 
     const nombre = document.createElement('span');
     nombre.className = 'mazo-nombre';
@@ -207,5 +243,8 @@ for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
     pintarTarjetaEstudio();
   };
 }
+
+$('buscar-mazo').oninput = pintarMazos;
+$('ordenar-mazos').onchange = pintarMazos;
 
 pintarMazos();
