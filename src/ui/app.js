@@ -179,15 +179,29 @@ function mensajeFinal() {
   return 'Repaso terminado. ¡Sigue practicando! 📚';
 }
 
+/** Compara respuestas de forma flexible: ignora mayúsculas, acentos y espacios. */
+function normalizarRespuesta(texto) {
+  return (texto || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/\s+/g, '');
+}
+
 function pintarTarjetaEstudio() {
   const v = sesion.vistaActual();
   $('posicion').textContent = `${v.posicion} / ${v.total}`;
   $('pregunta').textContent = v.pregunta;
   $('respuesta').textContent = v.respuesta ?? '';
   $('btn-acierto').disabled = $('btn-fallo').disabled = !sesion.puedeMarcar();
+  // "Comprobar" se deshabilita solo cuando la tarjeta ya quedó marcada (revelada y sin poder volver a marcar).
+  $('btn-comprobar').disabled = v.respuesta !== null && !sesion.puedeMarcar();
   $('btn-siguiente').disabled = sesion.esUltima();
   $('msg-estudio').textContent = sesion.terminado() ? mensajeFinal() : '';
   $('tarjeta').classList.remove('resultado-acierto', 'resultado-fallo');
+}
+
+function limpiarComprobacion() {
+  $('respuesta-usuario').value = '';
+  $('msg-comprobar').textContent = '';
 }
 
 $('form-mazo').onsubmit = (e) => {
@@ -262,11 +276,12 @@ $('btn-estudiar').onclick = () => {
   if (!r.ok) { mostrarMensaje($('msg-tarjeta'), r.error, true); return; }
   sesion = r.sesion;
   $('seccion-estudio').hidden = false;
+  limpiarComprobacion();
   pintarTarjetaEstudio();
 };
 
 $('tarjeta').onclick = $('btn-revelar').onclick = () => { sesion.revelar(); pintarTarjetaEstudio(); };
-$('btn-siguiente').onclick = () => { sesion.siguiente(); pintarTarjetaEstudio(); };
+$('btn-siguiente').onclick = () => { sesion.siguiente(); limpiarComprobacion(); pintarTarjetaEstudio(); };
 for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
   $(id).onclick = () => {
     const r = app.marcar(mazoActual, sesion, acierto);
@@ -275,6 +290,30 @@ for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
     if (r.ok) $('tarjeta').classList.add(acierto ? 'resultado-acierto' : 'resultado-fallo');
   };
 }
+
+$('form-comprobar').onsubmit = (e) => {
+  e.preventDefault();
+  const v = sesion.revelar(); // asegura respuestaVisible=true para poder marcar (RF-08)
+  const correcto = normalizarRespuesta($('respuesta-usuario').value) === normalizarRespuesta(v.respuesta);
+  const r = app.marcar(mazoActual, sesion, correcto);
+  if (!r.ok) { mostrarMensaje($('msg-comprobar'), r.error, true); return; }
+
+  refrescar();
+  pintarTarjetaEstudio();
+  $('tarjeta').classList.add(correcto ? 'resultado-acierto' : 'resultado-fallo');
+
+  if (correcto) {
+    mostrarMensaje($('msg-comprobar'), '¡Correcto! ✓', false);
+    setTimeout(() => {
+      if (sesion.esUltima()) return;
+      sesion.siguiente();
+      limpiarComprobacion();
+      pintarTarjetaEstudio();
+    }, 900);
+  } else {
+    mostrarMensaje($('msg-comprobar'), `✗ Incorrecto. La respuesta correcta es: ${v.respuesta}`, true);
+  }
+};
 
 $('buscar-mazo').oninput = pintarMazos;
 $('ordenar-mazos').onchange = pintarMazos;
