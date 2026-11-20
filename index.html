@@ -67,7 +67,16 @@
 
     .app-header { position: relative; text-align: center; margin-bottom: 20px; }
     .app-header h1 { font-size: 1.4rem; margin: 0 0 4px; }
+    .app-header h1 .emoji-titulo { display: inline-block; animation: balanceo 2.4s ease-in-out infinite; }
     .app-header p { margin: 0; color: var(--texto-suave); font-size: .9rem; }
+    @keyframes balanceo {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-8deg); }
+      75% { transform: rotate(8deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .app-header h1 .emoji-titulo { animation: none; }
+    }
     #btn-tema {
       position: absolute; top: 0; right: 0; width: auto;
       background: var(--superficie); color: var(--texto); border-color: var(--borde);
@@ -109,11 +118,16 @@
     input { background: var(--fondo); }
     input:focus { outline: 2px solid var(--azul); outline-offset: 1px; }
 
-    button { background: var(--azul); color: #fff; border: 1px solid var(--azul); cursor: pointer; font-weight: 600; transition: filter .15s; }
-    button:hover { filter: brightness(1.08); }
-    button:disabled { background: #c3cbd6; border-color: #c3cbd6; cursor: default; filter: none; }
+    button {
+      background: var(--azul); color: #fff; border: 1px solid var(--azul); cursor: pointer; font-weight: 600;
+      border-radius: 999px; transition: filter .15s, transform .12s;
+    }
+    button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    button:active { transform: translateY(0) scale(.97); }
+    button:disabled { background: #c3cbd6; border-color: #c3cbd6; cursor: default; filter: none; transform: none; }
     button.secundario { background: var(--azul-claro); color: var(--azul-oscuro); border-color: var(--azul-claro); }
     button.peligro { background: var(--rojo-claro); color: var(--rojo); border-color: var(--rojo-claro); }
+    input, select { border-radius: 10px; }
 
     .mensaje { min-height: 1.1em; margin: 2px 0 0; font-size: .9rem; }
     .mensaje.error { color: var(--rojo); } .mensaje.ok { color: var(--verde); }
@@ -127,13 +141,16 @@
     #lista-mazos button {
       width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 10px;
       background: var(--azul-claro); color: var(--texto); border-color: var(--azul-claro);
-      padding: 12px 14px;
+      padding: 12px 14px 12px 12px; border-left: 5px solid var(--acento, var(--azul));
+      border-radius: 14px;
     }
+    #lista-mazos button:hover { transform: translateY(-2px) translateX(0); }
     #lista-mazos .mazo-nombre { font-weight: 600; overflow-wrap: anywhere; }
     #lista-mazos .mazo-meta { font-size: .8rem; color: var(--texto-suave); font-weight: 400; }
     #lista-mazos .mazo-badge {
-      flex: none; font-size: .8rem; font-weight: 700; color: var(--azul-oscuro);
-      background: var(--superficie); border-radius: 999px; padding: 2px 10px;
+      flex: none; font-size: .8rem; font-weight: 700; color: var(--acento, var(--azul-oscuro));
+      background: color-mix(in srgb, var(--acento, var(--azul)) 20%, var(--superficie));
+      border-radius: 999px; padding: 2px 10px;
     }
     #lista-mazos .lista-vacia-aviso { color: var(--texto-suave); font-size: .9rem; padding: 4px 0; }
 
@@ -157,10 +174,33 @@
       border: 2px solid var(--azul); border-radius: var(--radio); background: var(--azul-claro);
       padding: 28px 20px; min-height: 140px; cursor: pointer; overflow-wrap: anywhere;
       display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px;
+      transition: border-color .2s, box-shadow .2s;
     }
+    #tarjeta:hover { box-shadow: 0 4px 14px rgba(47, 90, 168, .18); }
     #pregunta { font-size: 1.1rem; font-weight: 600; }
     #respuesta { color: var(--azul-oscuro); font-weight: 600; min-height: 1.3em; }
+    #respuesta:not(:empty) { animation: aparecer .25s ease-out; }
+    @keyframes aparecer {
+      from { opacity: 0; transform: translateY(6px) scale(.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #tarjeta.resultado-acierto { border-color: var(--verde); animation: destello-ok .5s ease; }
+    #tarjeta.resultado-fallo { animation: sacudida .4s ease; }
+    @keyframes destello-ok {
+      0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--verde) 45%, transparent); }
+      100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--verde) 0%, transparent); }
+    }
+    @keyframes sacudida {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
     #msg-estudio { text-align: center; margin-top: 10px; }
+    @media (prefers-reduced-motion: reduce) {
+      #respuesta:not(:empty), #tarjeta.resultado-acierto, #tarjeta.resultado-fallo { animation: none; }
+    }
 
     @media (max-width: 420px) {
       body { padding: 14px 10px 36px; }
@@ -171,7 +211,7 @@
 <body>
   <header class="app-header">
     <button type="button" id="btn-tema" aria-label="Cambiar tema claro/oscuro">🌙</button>
-    <h1>📚 Flashcards · Cálculo y Lógica</h1>
+    <h1><span class="emoji-titulo">📚</span> Flashcards · Cálculo y Lógica</h1>
     <p>Crea mazos, repasa y lleva el control de tu avance.</p>
   </header>
 

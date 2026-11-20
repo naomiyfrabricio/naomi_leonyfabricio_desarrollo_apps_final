@@ -29,6 +29,12 @@ function mostrarMensaje(el, texto, esError) {
   el.className = esError ? 'mensaje error' : 'mensaje ok';
 }
 
+// Colores de acento por mazo, solo decorativos (no se guardan, se calculan del id).
+const PALETA_MAZOS = ['#e8604c', '#2f9e6b', '#9256c9', '#d9a521', '#2f8fd4', '#d4578f', '#1fa394', '#c9622f'];
+function colorMazo(id) {
+  return PALETA_MAZOS[id % PALETA_MAZOS.length];
+}
+
 function boton(texto, onClick, clase = '') {
   const b = document.createElement('button');
   b.type = 'button';
@@ -98,6 +104,7 @@ function pintarMazos() {
 
     const b = document.createElement('button');
     b.type = 'button';
+    b.style.setProperty('--acento', colorMazo(m.id));
     b.append(info, badge);
     b.onclick = () => abrirMazo(m.id);
 
@@ -165,6 +172,13 @@ function cancelarEdicion() {
   $('btn-tarjeta').textContent = 'Añadir tarjeta';
 }
 
+function mensajeFinal() {
+  const pct = app.resumen(mazoActual).porcentaje;
+  if (pct >= 80) return '¡Repaso terminado! Lo dominas 🎉';
+  if (pct >= 50) return '¡Repaso terminado! Vas por buen camino 💪';
+  return 'Repaso terminado. ¡Sigue practicando! 📚';
+}
+
 function pintarTarjetaEstudio() {
   const v = sesion.vistaActual();
   $('posicion').textContent = `${v.posicion} / ${v.total}`;
@@ -172,7 +186,8 @@ function pintarTarjetaEstudio() {
   $('respuesta').textContent = v.respuesta ?? '';
   $('btn-acierto').disabled = $('btn-fallo').disabled = !sesion.puedeMarcar();
   $('btn-siguiente').disabled = sesion.esUltima();
-  $('msg-estudio').textContent = sesion.terminado() ? 'Repaso terminado.' : '';
+  $('msg-estudio').textContent = sesion.terminado() ? mensajeFinal() : '';
+  $('tarjeta').classList.remove('resultado-acierto', 'resultado-fallo');
 }
 
 $('form-mazo').onsubmit = (e) => {
@@ -257,6 +272,7 @@ for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
     const r = app.marcar(mazoActual, sesion, acierto);
     if (r.ok) refrescar();
     pintarTarjetaEstudio();
+    if (r.ok) $('tarjeta').classList.add(acierto ? 'resultado-acierto' : 'resultado-fallo');
   };
 }
 
