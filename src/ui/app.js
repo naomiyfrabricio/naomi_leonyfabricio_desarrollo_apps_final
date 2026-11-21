@@ -2,12 +2,18 @@
 import { crearControlador } from './controlador.js';
 import { AlmacenamientoLocal } from '../almacenamiento/almacenamientoLocal.js';
 import { SesionEstudio } from '../estudio/sesionEstudio.js';
+// EXTRA fuera del alcance de RF-01..12 (ver docs/plan_incrementos.md §1): explicaciones para estudiar.
+import { explicacionDe } from '../extra/explicaciones.js';
 
 const app = crearControlador(new AlmacenamientoLocal(window.localStorage));
 const $ = (id) => document.getElementById(id);
 let mazoActual = null;
 let tarjetaEditando = null;
 let sesion = null;
+
+// Estado de la vista "Ver explicación del tema" (extra, solo lectura).
+let tarjetasPresentacion = [];
+let indicePresentacion = 0;
 
 // Estado propio de cada sesión de estudio (solo UI, no se guarda).
 let ordenEstudio = [];      // tarjetas en el orden exacto que usa `sesion` (normal o barajado)
@@ -222,6 +228,7 @@ function abrirMazo(id) {
   $('nuevo-nombre').value = m.nombre;
   $('seccion-mazo').hidden = false;
   $('seccion-estudio').hidden = true;
+  $('seccion-presentacion').hidden = true;
   cancelarEdicion();
   pintarTarjetas();
   pintarEstadisticas();
@@ -460,6 +467,38 @@ $('btn-estudiar').onclick = () => {
   const r = iniciarSesionSobre(tarjetas);
   if (!r.ok) mostrarMensaje($('msg-tarjeta'), r.error, true);
 };
+
+// EXTRA: "Ver explicación del tema" — solo lectura, pasa pregunta por pregunta con su explicación.
+function pintarPresentacion() {
+  const mazo = app.obtenerMazo(mazoActual);
+  const t = tarjetasPresentacion[indicePresentacion];
+  $('posicion-presentacion').textContent = `${indicePresentacion + 1} / ${tarjetasPresentacion.length}`;
+  $('barra-progreso-presentacion').style.width = `${((indicePresentacion + 1) / tarjetasPresentacion.length) * 100}%`;
+  $('pregunta-presentacion').textContent = t.pregunta;
+  $('respuesta-presentacion').textContent = t.respuesta;
+  $('explicacion-presentacion').textContent = explicacionDe(mazo.nombre, t.pregunta);
+  $('btn-anterior-presentacion').disabled = indicePresentacion === 0;
+  $('btn-siguiente-presentacion').disabled = indicePresentacion === tarjetasPresentacion.length - 1;
+}
+
+$('btn-ver-explicacion').onclick = () => {
+  const mazo = app.obtenerMazo(mazoActual);
+  if (mazo.tarjetas.length === 0) { mostrarMensaje($('msg-tarjeta'), 'Este mazo no tiene tarjetas que explicar.', true); return; }
+  tarjetasPresentacion = mazo.tarjetas;
+  indicePresentacion = 0;
+  cancelarTemporizador();
+  $('seccion-estudio').hidden = true;
+  $('seccion-presentacion').hidden = false;
+  pintarPresentacion();
+};
+
+$('btn-anterior-presentacion').onclick = () => {
+  if (indicePresentacion > 0) { indicePresentacion -= 1; pintarPresentacion(); }
+};
+$('btn-siguiente-presentacion').onclick = () => {
+  if (indicePresentacion < tarjetasPresentacion.length - 1) { indicePresentacion += 1; pintarPresentacion(); }
+};
+$('btn-cerrar-presentacion').onclick = () => { $('seccion-presentacion').hidden = true; };
 
 $('btn-repasar-errores').onclick = () => {
   const mazo = app.obtenerMazo(mazoActual);

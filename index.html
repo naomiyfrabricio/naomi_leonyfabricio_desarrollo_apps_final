@@ -178,6 +178,20 @@
     .opcion-estudio input[type="checkbox"] { width: auto; flex: none; }
     .opcion-estudio input[type="number"] { padding: 4px 6px; }
 
+    /* Presentación / explicación del tema (extra, ver docs/plan_incrementos.md §1) */
+    .panel-presentacion { background: linear-gradient(180deg, var(--superficie), var(--azul-claro) 180%); }
+    #posicion-presentacion { text-align: center; color: var(--texto-suave); font-weight: 600; margin: 0 0 8px; }
+    #barra-progreso-presentacion { height: 100%; width: 0%; background: var(--azul); border-radius: 999px; transition: width .25s ease; }
+    .tarjeta-presentacion {
+      border: 2px solid var(--azul); border-radius: var(--radio); background: var(--superficie);
+      padding: 28px 24px; min-height: 220px; overflow-wrap: anywhere;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px;
+      box-shadow: var(--sombra);
+    }
+    .pregunta-presentacion { font-size: 1.25rem; font-weight: 700; }
+    .respuesta-presentacion { color: var(--azul-oscuro); font-weight: 700; font-size: 1.05rem; }
+    .explicacion-presentacion { color: var(--texto-suave); font-size: .95rem; line-height: 1.5; max-width: 46ch; }
+
     /* Estudio */
     #posicion { text-align: center; color: var(--texto-suave); font-weight: 600; margin: 0 0 8px; }
     .barra-progreso { height: 8px; border-radius: 999px; background: var(--borde); overflow: hidden; margin-bottom: 8px; }
@@ -296,7 +310,10 @@
       <input type="checkbox" id="chk-examen"> ⏱ Modo examen, con
       <input type="number" id="examen-segundos" value="20" min="5" max="300" style="width: 70px; display: inline-block;"> segundos por tarjeta
     </label>
-    <button id="btn-estudiar" type="button" style="margin-top: 10px;">▶ Estudiar este mazo</button>
+    <div class="fila" style="margin-top: 10px;">
+      <button id="btn-estudiar" type="button">▶ Estudiar este mazo</button>
+      <button id="btn-ver-explicacion" type="button" class="secundario">📖 Ver explicación del tema</button>
+    </div>
   </section>
 
   <section id="seccion-estudio" class="panel" hidden>
@@ -322,6 +339,22 @@
     </div>
     <p id="msg-estudio" class="mensaje ok"></p>
     <button id="btn-repasar-errores" type="button" class="peligro" style="margin-top: 8px;" hidden>🔁 Repasar mis errores</button>
+  </section>
+
+  <section id="seccion-presentacion" class="panel panel-presentacion" hidden>
+    <h2>📖 Explicación del tema</h2>
+    <p id="posicion-presentacion"></p>
+    <div class="barra-progreso"><div id="barra-progreso-presentacion"></div></div>
+    <div class="tarjeta-presentacion">
+      <div id="pregunta-presentacion" class="pregunta-presentacion"></div>
+      <div id="respuesta-presentacion" class="respuesta-presentacion"></div>
+      <div id="explicacion-presentacion" class="explicacion-presentacion"></div>
+    </div>
+    <div class="fila" style="margin-top: 10px;">
+      <button id="btn-anterior-presentacion" type="button" class="secundario">◀ Anterior</button>
+      <button id="btn-siguiente-presentacion" type="button" class="secundario">Siguiente ▶</button>
+    </div>
+    <button id="btn-cerrar-presentacion" type="button" class="peligro" style="margin-top: 8px;">Cerrar</button>
   </section>
 
   <script type="module" src="src/ui/app.js"></script>
