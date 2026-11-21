@@ -66,7 +66,10 @@
     }
 
     .app-header { position: relative; text-align: center; margin-bottom: 20px; }
-    .app-header h1 { font-size: 1.4rem; margin: 0 0 4px; }
+    .app-header h1 { font-size: 1.4rem; margin: 0 0 4px; padding-inline: 68px; }
+    @media (max-width: 420px) {
+      .app-header h1 { font-size: 1.15rem; padding-inline: 56px; }
+    }
     .app-header h1 .emoji-titulo { display: inline-block; animation: balanceo 2.4s ease-in-out infinite; }
     .app-header p { margin: 0; color: var(--texto-suave); font-size: .9rem; }
     @keyframes balanceo {
@@ -77,11 +80,13 @@
     @media (prefers-reduced-motion: reduce) {
       .app-header h1 .emoji-titulo { animation: none; }
     }
-    #btn-tema {
-      position: absolute; top: 0; right: 0; width: auto;
+    .botones-header { position: absolute; top: 0; right: 0; display: flex; gap: 6px; }
+    .botones-header button {
+      width: auto;
       background: var(--superficie); color: var(--texto); border-color: var(--borde);
       padding: 8px 10px; font-size: 1rem; line-height: 1;
     }
+    #racha-estudio { margin-top: 4px; font-size: .85rem; color: var(--texto-suave); }
 
     .panel {
       background: var(--superficie);
@@ -168,8 +173,16 @@
     .tarjeta-fila span { flex: 1 1 100%; overflow-wrap: anywhere; font-size: .95rem; }
     .tarjeta-fila button { padding: 6px 12px; font-size: .85rem; width: auto; flex: none; }
 
+    /* Opciones de estudio */
+    .opcion-estudio { display: flex; align-items: center; gap: 6px; font-size: .9rem; margin-bottom: 8px; cursor: pointer; }
+    .opcion-estudio input[type="checkbox"] { width: auto; flex: none; }
+    .opcion-estudio input[type="number"] { padding: 4px 6px; }
+
     /* Estudio */
-    #posicion { text-align: center; color: var(--texto-suave); font-weight: 600; margin: 0 0 10px; }
+    #posicion { text-align: center; color: var(--texto-suave); font-weight: 600; margin: 0 0 8px; }
+    .barra-progreso { height: 8px; border-radius: 999px; background: var(--borde); overflow: hidden; margin-bottom: 8px; }
+    .barra-progreso > div { height: 100%; width: 0%; background: var(--azul); border-radius: 999px; transition: width .25s ease; }
+    #temporizador-estudio { text-align: center; font-weight: 700; color: var(--rojo); min-height: 1.2em; margin: 0 0 8px; }
     #tarjeta {
       border: 2px solid var(--azul); border-radius: var(--radio); background: var(--azul-claro);
       padding: 28px 20px; min-height: 140px; cursor: pointer; overflow-wrap: anywhere;
@@ -210,9 +223,13 @@
 </head>
 <body>
   <header class="app-header">
-    <button type="button" id="btn-tema" aria-label="Cambiar tema claro/oscuro">🌙</button>
+    <div class="botones-header">
+      <button type="button" id="btn-sonido" aria-label="Activar o silenciar sonidos">🔊</button>
+      <button type="button" id="btn-tema" aria-label="Cambiar tema claro/oscuro">🌙</button>
+    </div>
     <h1><span class="emoji-titulo">📚</span> Flashcards · Cálculo y Lógica</h1>
     <p>Crea mazos, repasa y lleva el control de tu avance.</p>
+    <p id="racha-estudio"></p>
   </header>
 
   <section class="panel">
@@ -226,9 +243,10 @@
     <h3>Importar desde archivo</h3>
     <form id="form-importar">
       <input id="archivo-importar" type="file" accept="application/json,.json" aria-label="Archivo de mazo a importar">
-      <button type="submit" class="secundario">Importar mazo desde archivo</button>
+      <button type="submit" class="secundario">Importar mazo(s) desde archivo</button>
     </form>
     <p id="msg-importar" class="mensaje"></p>
+    <button type="button" id="btn-exportar-todos" class="secundario">⇩ Exportar todos mis mazos</button>
   </section>
 
   <section class="panel">
@@ -260,6 +278,7 @@
     </form>
     <div class="fila" style="margin-top: 8px;">
       <button type="button" id="btn-exportar-mazo" class="secundario">⇩ Exportar este mazo</button>
+      <button type="button" id="btn-duplicar-mazo" class="secundario">📄 Duplicar mazo</button>
     </div>
 
     <h3>Tarjetas</h3>
@@ -271,12 +290,20 @@
     </form>
     <p id="msg-tarjeta" class="mensaje"></p>
 
-    <button id="btn-estudiar" type="button" style="margin-top: 14px;">▶ Estudiar este mazo</button>
+    <h3>Opciones de estudio</h3>
+    <label class="opcion-estudio"><input type="checkbox" id="chk-aleatorio"> 🔀 Orden aleatorio</label>
+    <label class="opcion-estudio">
+      <input type="checkbox" id="chk-examen"> ⏱ Modo examen, con
+      <input type="number" id="examen-segundos" value="20" min="5" max="300" style="width: 70px; display: inline-block;"> segundos por tarjeta
+    </label>
+    <button id="btn-estudiar" type="button" style="margin-top: 10px;">▶ Estudiar este mazo</button>
   </section>
 
   <section id="seccion-estudio" class="panel" hidden>
     <h2>🧠 Modo estudio</h2>
     <p id="posicion"></p>
+    <div class="barra-progreso"><div id="barra-progreso-relleno"></div></div>
+    <p id="temporizador-estudio"></p>
     <div id="tarjeta"><div id="pregunta"></div><div id="respuesta"></div></div>
 
     <form id="form-comprobar" style="margin-top: 12px;">
@@ -294,6 +321,7 @@
       <button id="btn-fallo" type="button" class="peligro">✗ Fallé</button>
     </div>
     <p id="msg-estudio" class="mensaje ok"></p>
+    <button id="btn-repasar-errores" type="button" class="peligro" style="margin-top: 8px;" hidden>🔁 Repasar mis errores</button>
   </section>
 
   <script type="module" src="src/ui/app.js"></script>

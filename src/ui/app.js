@@ -1,12 +1,21 @@
 // Conecta el controlador con la página (index.html). Solo maneja el DOM.
 import { crearControlador } from './controlador.js';
 import { AlmacenamientoLocal } from '../almacenamiento/almacenamientoLocal.js';
+import { SesionEstudio } from '../estudio/sesionEstudio.js';
 
 const app = crearControlador(new AlmacenamientoLocal(window.localStorage));
 const $ = (id) => document.getElementById(id);
 let mazoActual = null;
 let tarjetaEditando = null;
 let sesion = null;
+
+// Estado propio de cada sesión de estudio (solo UI, no se guarda).
+let ordenEstudio = [];      // tarjetas en el orden exacto que usa `sesion` (normal o barajado)
+let erroresSesion = [];     // ids de tarjetas falladas en la sesión actual, para "Repasar mis errores"
+let sesionAciertos = 0;
+let sesionFallos = 0;
+let temporizador = null;
+let segundosRestantes = 0;
 
 // Preferencia de tema claro/oscuro (solo UI, separado de los datos de mazos — RNF-09).
 const CLAVE_TEMA = 'flashcards.ui.tema';
@@ -24,6 +33,58 @@ $('btn-tema').onclick = () => {
   aplicarTema(siguiente);
 };
 
+// Preferencia de sonido (solo UI). Un pitido simple con Web Audio, sin archivos externos.
+const CLAVE_SONIDO = 'flashcards.ui.sonido';
+function sonidoActivado() {
+  return localStorage.getItem(CLAVE_SONIDO) !== 'off';
+}
+function pintarBotonSonido() {
+  $('btn-sonido').textContent = sonidoActivado() ? '🔊' : '🔇';
+}
+pintarBotonSonido();
+$('btn-sonido').onclick = () => {
+  localStorage.setItem(CLAVE_SONIDO, sonidoActivado() ? 'off' : 'on');
+  pintarBotonSonido();
+};
+function reproducirSonido(tipo) {
+  if (!sonidoActivado()) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const ganancia = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = tipo === 'acierto' ? 880 : 220;
+    ganancia.gain.setValueAtTime(0.15, ctx.currentTime);
+    ganancia.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+    osc.connect(ganancia).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+    osc.onended = () => ctx.close();
+  } catch {
+    // Si el navegador bloquea audio sin interacción previa, se ignora sin romper la app.
+  }
+}
+
+// Racha de días estudiando (solo UI, motivacional — no es RF-08/RF-09, que llevan el registro real).
+const CLAVE_RACHA = 'flashcards.ui.racha';
+function hoyISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+function registrarEstudioDeHoy() {
+  const guardado = JSON.parse(localStorage.getItem(CLAVE_RACHA) || '{"ultimaFecha":null,"racha":0}');
+  const hoy = hoyISO();
+  if (guardado.ultimaFecha === hoy) return;
+  const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const racha = guardado.ultimaFecha === ayer ? guardado.racha + 1 : 1;
+  localStorage.setItem(CLAVE_RACHA, JSON.stringify({ ultimaFecha: hoy, racha }));
+  pintarRacha();
+}
+function pintarRacha() {
+  const guardado = JSON.parse(localStorage.getItem(CLAVE_RACHA) || '{"racha":0}');
+  $('racha-estudio').textContent = guardado.racha > 0 ? `🔥 ${guardado.racha} día(s) seguido(s) estudiando` : '';
+}
+pintarRacha();
+
 function mostrarMensaje(el, texto, esError) {
   el.textContent = texto;
   el.className = esError ? 'mensaje error' : 'mensaje ok';
@@ -33,6 +94,16 @@ function mostrarMensaje(el, texto, esError) {
 const PALETA_MAZOS = ['#e8604c', '#2f9e6b', '#9256c9', '#d9a521', '#2f8fd4', '#d4578f', '#1fa394', '#c9622f'];
 function colorMazo(id) {
   return PALETA_MAZOS[id % PALETA_MAZOS.length];
+}
+
+/** Devuelve una copia de `arr` en orden aleatorio (Fisher-Yates). No muta el original. */
+function barajar(arr) {
+  const copia = [...arr];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
 }
 
 function boton(texto, onClick, clase = '') {
@@ -144,6 +215,7 @@ function pintarEstadisticas() {
 }
 
 function abrirMazo(id) {
+  cancelarTemporizador();
   mazoActual = id;
   const m = app.obtenerMazo(id);
   $('titulo-mazo').textContent = `${m.nombre} · ${m.tarjetas.length} tarjeta(s)`;
@@ -173,10 +245,12 @@ function cancelarEdicion() {
 }
 
 function mensajeFinal() {
-  const pct = app.resumen(mazoActual).porcentaje;
-  if (pct >= 80) return '¡Repaso terminado! Lo dominas 🎉';
-  if (pct >= 50) return '¡Repaso terminado! Vas por buen camino 💪';
-  return 'Repaso terminado. ¡Sigue practicando! 📚';
+  const total = sesionAciertos + sesionFallos;
+  const pct = total > 0 ? Math.round((sesionAciertos / total) * 100) : 0;
+  const resumen = `Repaso terminado: ${sesionAciertos}/${total} correctas (${pct} %).`;
+  if (pct >= 80) return `${resumen} ¡Lo dominas! 🎉`;
+  if (pct >= 50) return `${resumen} Vas por buen camino 💪`;
+  return `${resumen} Sigue practicando 📚`;
 }
 
 /** Compara respuestas de forma flexible: ignora mayúsculas, acentos y espacios. */
@@ -186,22 +260,84 @@ function normalizarRespuesta(texto) {
     .toLowerCase().replace(/\s+/g, '');
 }
 
+/** id de la tarjeta que se está mostrando ahora mismo, según el orden usado en esta sesión. */
+function idTarjetaActual() {
+  const v = sesion.vistaActual();
+  return ordenEstudio[v.posicion - 1]?.id;
+}
+
+function cancelarTemporizador() {
+  if (temporizador) { clearInterval(temporizador); temporizador = null; }
+  $('temporizador-estudio').textContent = '';
+}
+
+function actualizarTemporizadorUI() {
+  $('temporizador-estudio').textContent = `⏱ ${segundosRestantes}s`;
+}
+
+function iniciarTemporizadorSiAplica() {
+  cancelarTemporizador();
+  if (!$('chk-examen').checked || sesion.terminado()) return;
+  segundosRestantes = Number($('examen-segundos').value) || 20;
+  actualizarTemporizadorUI();
+  temporizador = setInterval(() => {
+    segundosRestantes -= 1;
+    actualizarTemporizadorUI();
+    if (segundosRestantes <= 0) tiempoAgotado();
+  }, 1000);
+}
+
+/** Se acabó el tiempo sin que el estudiante respondiera: cuenta como fallo (RF-08). */
+function tiempoAgotado() {
+  cancelarTemporizador();
+  const v = sesion.revelar(); // asegura respuestaVisible=true para poder marcar (RF-08)
+  const r = app.marcar(mazoActual, sesion, false);
+  if (!r.ok) return;
+  sesionFallos += 1;
+  erroresSesion.push(idTarjetaActual());
+  registrarEstudioDeHoy();
+  refrescar();
+  pintarTarjetaEstudio();
+  $('tarjeta').classList.add('resultado-fallo');
+  reproducirSonido('fallo');
+  mostrarMensaje($('msg-comprobar'), `⏱ Se acabó el tiempo. La respuesta era: ${v.respuesta}`, true);
+}
+
 function pintarTarjetaEstudio() {
   const v = sesion.vistaActual();
   $('posicion').textContent = `${v.posicion} / ${v.total}`;
   $('pregunta').textContent = v.pregunta;
   $('respuesta').textContent = v.respuesta ?? '';
+  $('barra-progreso-relleno').style.width = `${(v.posicion / v.total) * 100}%`;
   $('btn-acierto').disabled = $('btn-fallo').disabled = !sesion.puedeMarcar();
   // "Comprobar" se deshabilita solo cuando la tarjeta ya quedó marcada (revelada y sin poder volver a marcar).
   $('btn-comprobar').disabled = v.respuesta !== null && !sesion.puedeMarcar();
   $('btn-siguiente').disabled = sesion.esUltima();
   $('msg-estudio').textContent = sesion.terminado() ? mensajeFinal() : '';
+  $('btn-repasar-errores').hidden = !(sesion.terminado() && erroresSesion.length > 0);
+  $('btn-repasar-errores').textContent = `🔁 Repasar mis errores (${erroresSesion.length})`;
   $('tarjeta').classList.remove('resultado-acierto', 'resultado-fallo');
 }
 
 function limpiarComprobacion() {
   $('respuesta-usuario').value = '';
   $('msg-comprobar').textContent = '';
+}
+
+/** Arranca una sesión de estudio sobre `tarjetas` (ya ordenadas) y reinicia los contadores de la sesión. */
+function iniciarSesionSobre(tarjetas) {
+  const r = SesionEstudio.iniciar({ tarjetas });
+  if (!r.ok) return r;
+  ordenEstudio = tarjetas;
+  erroresSesion = [];
+  sesionAciertos = 0;
+  sesionFallos = 0;
+  sesion = r.sesion;
+  $('seccion-estudio').hidden = false;
+  limpiarComprobacion();
+  pintarTarjetaEstudio();
+  iniciarTemporizadorSiAplica();
+  return r;
 }
 
 $('form-mazo').onsubmit = (e) => {
@@ -218,17 +354,44 @@ $('form-renombrar').onsubmit = (e) => {
   refrescar();
 };
 
-$('btn-exportar-mazo').onclick = () => {
-  const r = app.exportarMazo(mazoActual);
-  if (!r.ok) { mostrarMensaje($('msg-tarjeta'), r.error, true); return; }
-  const blob = new Blob([r.contenido], { type: 'application/json' });
+function descargarJSON(nombreArchivo, contenido) {
+  const blob = new Blob([contenido], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = r.nombreArchivo;
+  a.download = nombreArchivo;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+$('btn-exportar-mazo').onclick = () => {
+  const r = app.exportarMazo(mazoActual);
+  if (!r.ok) { mostrarMensaje($('msg-tarjeta'), r.error, true); return; }
+  descargarJSON(r.nombreArchivo, r.contenido);
   mostrarMensaje($('msg-tarjeta'), 'Mazo exportado correctamente.', false);
+};
+
+$('btn-duplicar-mazo').onclick = () => {
+  const mazo = app.obtenerMazo(mazoActual);
+  let intento = 0;
+  let r;
+  let nombreNuevo;
+  do {
+    intento += 1;
+    nombreNuevo = intento === 1 ? `${mazo.nombre} (copia)` : `${mazo.nombre} (copia ${intento})`;
+    r = app.crearMazo(nombreNuevo);
+  } while (!r.ok && intento < 50);
+  if (!r.ok) { mostrarMensaje($('msg-tarjeta'), r.error, true); return; }
+  for (const t of mazo.tarjetas) app.agregarTarjeta(r.mazo.id, t.pregunta, t.respuesta);
+  mostrarMensaje($('msg-tarjeta'), `Mazo duplicado como "${r.mazo.nombre}".`, false);
+  pintarMazos();
+};
+
+$('btn-exportar-todos').onclick = () => {
+  const mazos = app.listarMazos().map((m) => JSON.parse(app.exportarMazo(m.id).contenido));
+  if (mazos.length === 0) { mostrarMensaje($('msg-importar'), 'No tienes mazos para exportar.', true); return; }
+  descargarJSON('todos_mis_mazos.json', JSON.stringify({ version: 1, mazos }, null, 2));
+  mostrarMensaje($('msg-importar'), `${mazos.length} mazo(s) exportado(s) en un solo archivo.`, false);
 };
 
 $('form-importar').onsubmit = (e) => {
@@ -238,6 +401,25 @@ $('form-importar').onsubmit = (e) => {
   if (!archivo) { mostrarMensaje($('msg-importar'), 'Selecciona un archivo .json para importar.', true); return; }
   const lector = new FileReader();
   lector.onload = () => {
+    let datos;
+    try { datos = JSON.parse(lector.result); } catch { datos = null; }
+
+    if (datos && Array.isArray(datos.mazos)) {
+      // Archivo con varios mazos: cada uno pasa por la misma validación de RF-10/RF-12.
+      let importados = 0;
+      let fallidos = 0;
+      for (const m of datos.mazos) {
+        const r = app.importarMazo(JSON.stringify(m));
+        if (r.ok) importados += 1; else fallidos += 1;
+      }
+      const texto = fallidos > 0
+        ? `Se importaron ${importados} de ${datos.mazos.length} mazo(s). ${fallidos} no se pudieron importar.`
+        : `Se importaron ${importados} mazo(s) correctamente.`;
+      mostrarMensaje($('msg-importar'), texto, importados === 0);
+      if (importados > 0) { input.value = ''; pintarMazos(); }
+      return;
+    }
+
     const r = app.importarMazo(lector.result);
     mostrarMensaje($('msg-importar'), r.ok ? r.mensaje : r.error, !r.ok);
     if (r.ok) { input.value = ''; pintarMazos(); }
@@ -249,6 +431,7 @@ $('form-importar').onsubmit = (e) => {
 $('btn-eliminar-mazo').onclick = () => {
   const r = app.eliminarMazo(mazoActual, window.confirm('¿Eliminar este mazo con todas sus tarjetas?'));
   if (r.ok) {
+    cancelarTemporizador();
     mazoActual = null;
     $('seccion-mazo').hidden = true;
     $('seccion-estudio').hidden = true;
@@ -272,35 +455,53 @@ $('form-tarjeta').onsubmit = (e) => {
 };
 
 $('btn-estudiar').onclick = () => {
-  const r = app.iniciarEstudio(mazoActual);
-  if (!r.ok) { mostrarMensaje($('msg-tarjeta'), r.error, true); return; }
-  sesion = r.sesion;
-  $('seccion-estudio').hidden = false;
-  limpiarComprobacion();
-  pintarTarjetaEstudio();
+  const mazo = app.obtenerMazo(mazoActual);
+  const tarjetas = $('chk-aleatorio').checked ? barajar(mazo.tarjetas) : [...mazo.tarjetas];
+  const r = iniciarSesionSobre(tarjetas);
+  if (!r.ok) mostrarMensaje($('msg-tarjeta'), r.error, true);
+};
+
+$('btn-repasar-errores').onclick = () => {
+  const mazo = app.obtenerMazo(mazoActual);
+  const tarjetasFalladas = mazo.tarjetas.filter((t) => erroresSesion.includes(t.id));
+  iniciarSesionSobre(tarjetasFalladas);
 };
 
 $('tarjeta').onclick = $('btn-revelar').onclick = () => { sesion.revelar(); pintarTarjetaEstudio(); };
-$('btn-siguiente').onclick = () => { sesion.siguiente(); limpiarComprobacion(); pintarTarjetaEstudio(); };
+$('btn-siguiente').onclick = () => {
+  sesion.siguiente();
+  limpiarComprobacion();
+  pintarTarjetaEstudio();
+  iniciarTemporizadorSiAplica();
+};
 for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
   $(id).onclick = () => {
+    cancelarTemporizador();
     const r = app.marcar(mazoActual, sesion, acierto);
-    if (r.ok) refrescar();
+    if (!r.ok) return;
+    if (acierto) sesionAciertos += 1; else { sesionFallos += 1; erroresSesion.push(idTarjetaActual()); }
+    registrarEstudioDeHoy();
+    refrescar();
     pintarTarjetaEstudio();
-    if (r.ok) $('tarjeta').classList.add(acierto ? 'resultado-acierto' : 'resultado-fallo');
+    $('tarjeta').classList.add(acierto ? 'resultado-acierto' : 'resultado-fallo');
+    reproducirSonido(acierto ? 'acierto' : 'fallo');
   };
 }
 
 $('form-comprobar').onsubmit = (e) => {
   e.preventDefault();
+  cancelarTemporizador();
   const v = sesion.revelar(); // asegura respuestaVisible=true para poder marcar (RF-08)
   const correcto = normalizarRespuesta($('respuesta-usuario').value) === normalizarRespuesta(v.respuesta);
   const r = app.marcar(mazoActual, sesion, correcto);
   if (!r.ok) { mostrarMensaje($('msg-comprobar'), r.error, true); return; }
 
+  if (correcto) sesionAciertos += 1; else { sesionFallos += 1; erroresSesion.push(idTarjetaActual()); }
+  registrarEstudioDeHoy();
   refrescar();
   pintarTarjetaEstudio();
   $('tarjeta').classList.add(correcto ? 'resultado-acierto' : 'resultado-fallo');
+  reproducirSonido(correcto ? 'acierto' : 'fallo');
 
   if (correcto) {
     mostrarMensaje($('msg-comprobar'), '¡Correcto! ✓', false);
@@ -309,6 +510,7 @@ $('form-comprobar').onsubmit = (e) => {
       sesion.siguiente();
       limpiarComprobacion();
       pintarTarjetaEstudio();
+      iniciarTemporizadorSiAplica();
     }, 900);
   } else {
     mostrarMensaje($('msg-comprobar'), `✗ Incorrecto. La respuesta correcta es: ${v.respuesta}`, true);
