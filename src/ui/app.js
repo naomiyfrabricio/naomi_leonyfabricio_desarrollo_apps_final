@@ -461,11 +461,17 @@ $('form-tarjeta').onsubmit = (e) => {
   mostrarMensaje($('msg-tarjeta'), texto, !r.ok);
 };
 
-$('btn-estudiar').onclick = () => {
+function empezarEstudio() {
   const mazo = app.obtenerMazo(mazoActual);
   const tarjetas = $('chk-aleatorio').checked ? barajar(mazo.tarjetas) : [...mazo.tarjetas];
   const r = iniciarSesionSobre(tarjetas);
   if (!r.ok) mostrarMensaje($('msg-tarjeta'), r.error, true);
+}
+
+$('btn-estudiar').onclick = () => {
+  const mazo = app.obtenerMazo(mazoActual);
+  if ($('chk-explicacion-previa').checked && mazo.tarjetas.length > 0) abrirPresentacion(true);
+  else empezarEstudio();
 };
 
 // EXTRA: "Ver explicación del tema" — solo lectura, pasa pregunta por pregunta con su explicación.
@@ -481,15 +487,23 @@ function pintarPresentacion() {
   $('btn-siguiente-presentacion').disabled = indicePresentacion === tarjetasPresentacion.length - 1;
 }
 
-$('btn-ver-explicacion').onclick = () => {
+function abrirPresentacion(paraEstudiar) {
   const mazo = app.obtenerMazo(mazoActual);
   if (mazo.tarjetas.length === 0) { mostrarMensaje($('msg-tarjeta'), 'Este mazo no tiene tarjetas que explicar.', true); return; }
   tarjetasPresentacion = mazo.tarjetas;
   indicePresentacion = 0;
   cancelarTemporizador();
   $('seccion-estudio').hidden = true;
+  $('btn-empezar-preguntas').hidden = !paraEstudiar;
   $('seccion-presentacion').hidden = false;
   pintarPresentacion();
+}
+
+$('btn-ver-explicacion').onclick = () => abrirPresentacion(false);
+
+$('btn-empezar-preguntas').onclick = () => {
+  $('seccion-presentacion').hidden = true;
+  empezarEstudio();
 };
 
 $('btn-anterior-presentacion').onclick = () => {
