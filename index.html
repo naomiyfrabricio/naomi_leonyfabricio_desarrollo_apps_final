@@ -142,7 +142,13 @@
     .toolbar-mazos input { flex: 1 1 auto; min-width: 0; }
     .toolbar-mazos select { flex: 0 0 auto; background: var(--fondo); max-width: 44%; }
     #lista-mazos { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-    #lista-mazos li { display: block; }
+    #lista-mazos li { display: flex; gap: 8px; align-items: stretch; }
+    #lista-mazos .btn-abrir-mazo { flex: 1 1 auto; min-width: 0; }
+    #lista-mazos .btn-estudiar-mazo {
+      flex: none; width: auto; align-self: center; padding: 10px 14px; border-radius: 14px; white-space: nowrap;
+      background: var(--azul); color: #fff; border-color: var(--azul); border-left-width: 1px;
+    }
+    #btn-cargar-ejemplos { width: 100%; margin-bottom: 8px; }
     #lista-mazos button {
       width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 10px;
       background: var(--azul-claro); color: var(--texto); border-color: var(--azul-claro);
@@ -274,6 +280,8 @@
         <option value="tarjetas-desc">Tarjetas (más a menos)</option>
       </select>
     </div>
+    <button type="button" id="btn-cargar-ejemplos" class="secundario">📚 Cargar mazos de ejemplo</button>
+    <p id="msg-ejemplos" class="mensaje"></p>
     <ul id="lista-mazos"></ul>
     <p id="msg-buscar-mazo" class="mensaje"></p>
   </section>

@@ -4,6 +4,9 @@ import { AlmacenamientoLocal } from '../almacenamiento/almacenamientoLocal.js';
 import { SesionEstudio } from '../estudio/sesionEstudio.js';
 // EXTRA fuera del alcance de RF-01..12 (ver docs/plan_incrementos.md §1): explicaciones para estudiar.
 import { explicacionDe } from '../extra/explicaciones.js';
+// EXTRA: mazos de ejemplo para cargar con un clic (se validan con el importador de RF-10/RF-12).
+import { MAZOS_EJEMPLO } from '../extra/mazosEjemplo.js';
+import { normalizarNombre } from '../mazos/gestorMazos.js';
 
 const app = crearControlador(new AlmacenamientoLocal(window.localStorage));
 const $ = (id) => document.getElementById(id);
@@ -152,6 +155,7 @@ function pintarMazos() {
   const hayMazos = app.listarMazos().length > 0;
   $('msg-buscar-mazo').textContent =
     hayMazos && texto && filtrados.length === 0 ? `Ningún mazo coincide con "${texto}".` : '';
+  $('btn-cargar-ejemplos').className = hayMazos ? 'secundario' : '';
 
   if (!hayMazos) {
     const aviso = document.createElement('li');
@@ -163,6 +167,7 @@ function pintarMazos() {
 
   for (const { mazo: m, porcentaje: pct } of filtrados) {
     const li = document.createElement('li');
+    li.style.setProperty('--acento', colorMazo(m.id));
 
     const nombre = document.createElement('span');
     nombre.className = 'mazo-nombre';
@@ -179,13 +184,13 @@ function pintarMazos() {
     badge.className = 'mazo-badge';
     badge.textContent = `${pct} %`;
 
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.style.setProperty('--acento', colorMazo(m.id));
-    b.append(info, badge);
-    b.onclick = () => abrirMazo(m.id);
+    const abrir = boton('', () => abrirMazo(m.id), 'btn-abrir-mazo');
+    abrir.append(info, badge);
 
-    li.appendChild(b);
+    // EXTRA: estudiar sin abrir el mazo antes (mismas opciones de estudio que el detalle).
+    const estudiar = boton('▶ Estudiar', () => estudiarDesdeLista(m.id), 'btn-estudiar-mazo');
+
+    li.append(abrir, estudiar);
     lista.appendChild(li);
   }
 }
@@ -220,7 +225,12 @@ function pintarEstadisticas() {
   $('estadisticas').textContent = `Aciertos: ${r.aciertos} · Fallos: ${r.fallos} · Avance: ${r.porcentaje} %`;
 }
 
-function abrirMazo(id) {
+/** EXTRA: lleva la vista a una sección recién abierta. */
+function desplazarA(elemento) {
+  elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function abrirMazo(id, desplazar = true) {
   cancelarTemporizador();
   mazoActual = id;
   const m = app.obtenerMazo(id);
@@ -232,6 +242,7 @@ function abrirMazo(id) {
   cancelarEdicion();
   pintarTarjetas();
   pintarEstadisticas();
+  if (desplazar) desplazarA($('seccion-mazo'));
 }
 
 function refrescar() {
@@ -344,6 +355,7 @@ function iniciarSesionSobre(tarjetas) {
   limpiarComprobacion();
   pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
+  desplazarA($('seccion-estudio'));
   return r;
 }
 
@@ -457,22 +469,37 @@ $('form-tarjeta').onsubmit = (e) => {
     ? app.agregarTarjeta(mazoActual, p, rsp)
     : app.editarTarjeta(mazoActual, tarjetaEditando, p, rsp);
   const texto = r.ok ? (r.totalTarjetas ? `${r.mensaje} Total: ${r.totalTarjetas}` : r.mensaje) : r.error;
+  const esNueva = tarjetaEditando === null;
   if (r.ok) { cancelarEdicion(); refrescar(); }
   mostrarMensaje($('msg-tarjeta'), texto, !r.ok);
+  // EXTRA: tras añadir, el foco vuelve a Pregunta para escribir la siguiente tarjeta sin clics.
+  if (r.ok && esNueva) $('pregunta-in').focus();
 };
 
 function empezarEstudio() {
   const mazo = app.obtenerMazo(mazoActual);
   const tarjetas = $('chk-aleatorio').checked ? barajar(mazo.tarjetas) : [...mazo.tarjetas];
   const r = iniciarSesionSobre(tarjetas);
-  if (!r.ok) mostrarMensaje($('msg-tarjeta'), r.error, true);
+  if (!r.ok) {
+    mostrarMensaje($('msg-tarjeta'), r.error, true);
+    desplazarA($('msg-tarjeta'));
+  }
 }
 
-$('btn-estudiar').onclick = () => {
+/** Inicia el estudio del mazo actual respetando la opción de explicación previa (extra). */
+function iniciarEstudioMazoActual() {
   const mazo = app.obtenerMazo(mazoActual);
   if ($('chk-explicacion-previa').checked && mazo.tarjetas.length > 0) abrirPresentacion(true);
   else empezarEstudio();
-};
+}
+
+/** EXTRA: "▶ Estudiar" de la lista. Abre el mazo sin desplazar y estudia directamente. */
+function estudiarDesdeLista(id) {
+  abrirMazo(id, false);
+  iniciarEstudioMazoActual();
+}
+
+$('btn-estudiar').onclick = iniciarEstudioMazoActual;
 
 // EXTRA: "Ver explicación del tema" — solo lectura, pasa pregunta por pregunta con su explicación.
 function pintarPresentacion() {
@@ -497,6 +524,7 @@ function abrirPresentacion(paraEstudiar) {
   $('btn-empezar-preguntas').hidden = !paraEstudiar;
   $('seccion-presentacion').hidden = false;
   pintarPresentacion();
+  desplazarA($('seccion-presentacion'));
 }
 
 $('btn-ver-explicacion').onclick = () => abrirPresentacion(false);
@@ -572,5 +600,23 @@ $('form-comprobar').onsubmit = (e) => {
 
 $('buscar-mazo').oninput = pintarMazos;
 $('ordenar-mazos').onchange = pintarMazos;
+
+// EXTRA: carga los mazos de ejemplo validándolos con el importador; omite los que ya existen por nombre.
+$('btn-cargar-ejemplos').onclick = () => {
+  const nombres = new Set(app.listarMazos().map((m) => normalizarNombre(m.nombre)));
+  let cargados = 0;
+  let omitidos = 0;
+  let fallidos = 0;
+  for (const ejemplo of MAZOS_EJEMPLO) {
+    const clave = normalizarNombre(ejemplo.nombre);
+    if (nombres.has(clave)) { omitidos += 1; continue; }
+    const r = app.importarMazo(JSON.stringify(ejemplo));
+    if (r.ok) { cargados += 1; nombres.add(clave); } else { fallidos += 1; }
+  }
+  let texto = `Se cargaron ${cargados} mazo(s) de ejemplo y se omitieron ${omitidos} que ya existían.`;
+  if (fallidos > 0) texto += ` ${fallidos} no se pudieron importar.`;
+  mostrarMensaje($('msg-ejemplos'), texto, fallidos > 0);
+  pintarMazos();
+};
 
 pintarMazos();

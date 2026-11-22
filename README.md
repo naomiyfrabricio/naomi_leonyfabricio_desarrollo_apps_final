@@ -24,6 +24,7 @@ src/intercambio/intercambioMazos.js      # exportar/importar mazo por archivo JS
 src/almacenamiento/                      # memoria y localStorage, misma interfaz (RNF-05, RNF-09)
 src/ui/controlador.js, src/ui/app.js     # integración y DOM
 src/extra/explicaciones.js               # explicaciones del tema (EXTRA, fuera de RF)
+src/extra/mazosEjemplo.js                # 18 mazos de ejemplo para cargar con un clic (EXTRA, fuera de RF)
 tests/                                   # pruebas unitarias y de integración
 docs/                                    # especificación y plan de incrementos
 ```
@@ -42,7 +43,7 @@ y abrir http://localhost:8000 en Chrome, Firefox o Edge.
 
 1. **Crear un mazo:** escribe un nombre en "Crear un mazo" y pulsa **Crear mazo**. El nombre no puede estar vacío ni repetir uno ya existente.
 2. **Abrir un mazo:** haz clic en su tarjeta dentro de "Tus mazos" para ver sus tarjetas y su porcentaje de aciertos.
-3. **Añadir tarjetas:** dentro del mazo, llena **Pregunta** y **Respuesta** y pulsa **Añadir tarjeta**. Para editar una tarjeta existente usa **Editar**, que carga sus datos en el formulario; **Eliminar** la borra pidiendo confirmación.
+3. **Añadir tarjetas:** dentro del mazo, llena **Pregunta** y **Respuesta** y pulsa **Añadir tarjeta** (o pulsa Enter en el campo Respuesta). Tras añadir, el cursor vuelve a **Pregunta** y los campos se limpian, así puedes seguir escribiendo tarjetas sin tocar el ratón. Para editar una tarjeta existente usa **Editar**, que carga sus datos en el formulario; **Eliminar** la borra pidiendo confirmación.
 4. **Renombrar o eliminar el mazo:** en "Datos del mazo", usa **Renombrar** o **Eliminar mazo** (también pide confirmación y borra sus tarjetas).
 5. **Estudiar:** pulsa **Estudiar este mazo**. Verás la pregunta; pulsa **Revelar respuesta** (o toca la tarjeta) y luego marca **Acerté** o **Fallé**. **Siguiente** avanza a la próxima tarjeta. El avance se refleja de inmediato en el porcentaje del mazo. Si está marcada la opción de la explicación previa (ver el paso 11), primero verás la explicación.
 6. **Exportar un mazo:** dentro del mazo, pulsa **Exportar este mazo** para descargar un archivo `.json` con su nombre y tarjetas.
@@ -54,6 +55,8 @@ y abrir http://localhost:8000 en Chrome, Firefox o Edge.
 12. **Duplicar un mazo:** **📄 Duplicar mazo** crea una copia con sus tarjetas, llamada "(copia)".
 13. **Exportar o importar varios mazos:** **⇩ Exportar todos mis mazos** descarga un solo archivo con todos tus mazos. Al importar un archivo con varios mazos, cada uno se valida por separado y se informa cuántos se importaron.
 14. **Tema y sonido:** **🌙** cambia entre tema claro y oscuro (se recuerda tu elección); **🔊** activa o silencia los sonidos de acierto y fallo. Buscar y ordenar mazos se hace desde la lista de mazos.
+15. **Estudiar desde la lista:** cada mazo de "Tus mazos" tiene un botón **▶ Estudiar**. Inicia el estudio directo, sin abrir el mazo antes, y respeta las opciones marcadas (explicación previa y orden aleatorio). Si el mazo está vacío, verás el aviso de mazo vacío. El clic en el resto de la tarjeta sigue abriendo el mazo.
+16. **Cargar mazos de ejemplo:** **📚 Cargar mazos de ejemplo** (arriba de la lista) añade 18 mazos de Cálculo, Matemáticas, Electrónica, Ciberseguridad y SQL. Los que ya existan con el mismo nombre se omiten y el mensaje indica cuántos se cargaron y cuántos se omitieron.
 
 Todos los datos se guardan en el `localStorage` del navegador: funcionan sin conexión y persisten al recargar la página, pero son propios de ese navegador y ese dispositivo (no se sincronizan entre equipos salvo exportando/importando el archivo).
 
@@ -68,6 +71,10 @@ Mejoras de interfaz añadidas después de los RF-01 a RF-12. No cuentan para la 
 - Ver la explicación del tema antes de empezar a estudiar (contenido en `src/extra/explicaciones.js`).
 - Duplicar mazo; exportar todos los mazos en un solo archivo e importar un archivo con varios mazos.
 - Sonidos de acierto y fallo (silenciables) y racha de días estudiando.
+- Botón **▶ Estudiar** en cada mazo de la lista, para estudiar sin abrirlo antes.
+- Carga de 18 mazos de ejemplo con un clic, validados con el importador y sin duplicar nombres (`src/extra/mazosEjemplo.js`).
+- Tras añadir una tarjeta, el foco vuelve a Pregunta y los campos se limpian.
+- Desplazamiento suave a la sección que se abre: detalle del mazo, modo estudio y explicación del tema.
 
 Los extras son de interfaz y no tienen pruebas automáticas propias. Las 61 pruebas cubren los RF y la lógica de `src/mazos`, `src/tarjetas`, `src/estudio`, `src/estadisticas`, `src/intercambio` y `src/almacenamiento`. Quedan fuera la repetición espaciada y cualquier uso de IA o internet; la app sigue funcionando sin conexión (RNF-09).
 

@@ -21,6 +21,7 @@ Tags en `main`: v0.1.0, v0.2.0, v0.3.0 y v0.4.0; 61 de 61 pruebas pasan.
 - Cada incremento debe concluir con funcionalidad utilizable y verificable, pruebas normales/de límite/de error, commits por tarea y un tag en GitHub. El cierre real solo puede declararse con evidencia.
 - No se incluyen sincronización en la nube, cuentas, repetición espaciada avanzada, multimedia, colaboración en tiempo real ni interfaz multiidioma (especificación, §4).
 - Existen funciones extra de interfaz fuera de los RF-01 a RF-12. No cuentan para la evaluación y no modifican los RF ni sus pruebas. La lista está en el README, sección «Funciones extra (fuera del alcance evaluado)».
+- Extra del 2026-11-22 (marcado como extra, fuera de RF-01 a RF-12): botón «▶ Estudiar» por mazo en la lista, carga de mazos de ejemplo (`src/extra/mazosEjemplo.js`), foco en Pregunta tras añadir tarjeta y desplazamiento suave a las secciones abiertas. Solo tocan la interfaz (`src/ui/app.js`, `index.html`).
 
 ## 2. Inventario de requerimientos funcionales
 
@@ -192,6 +193,7 @@ No marcar como cumplido hasta contar con evidencia:
 | 2026-11-10 | Se registran los cierres reales de los incrementos 1 a 3 y el estado de cada RF. | Reporte de avance de la sesión 1 de implementación. | Equipo |
 | 2026-11-10 | Se distingue el avance programado (50 % al cierre de la semana 13) del real (75 %). El incremento 3 queda registrado como terminado anticipadamente; el 4 se mantiene en la semana 15. | Reportar el cumplimiento del calendario académico sin ocultar el trabajo adelantado. | Equipo |
 | 2026-11-20 | Se documentan las funciones extra de interfaz (fuera de RF-01 a RF-12) y la opción de ver la explicación del tema antes de estudiar. | El proyecto ya implementa los 4 incrementos y se añadieron mejoras de interfaz solicitadas por la autora | Naomi (solicitud propia) |
+| 2026-11-22 | Extra (fuera de RF-01 a RF-12): botón «▶ Estudiar» en cada mazo de la lista, carga de mazos de ejemplo, foco en Pregunta tras añadir tarjeta y desplazamiento suave a las secciones que se abren. | Reducir los pasos para usar la app; no cambia la lógica de mazos, tarjetas, estudio, estadísticas, intercambio ni almacenamiento. | Naomi (solicitud propia) |
 
 ## 11. Referencias de la especificación
 
