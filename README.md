@@ -26,6 +26,7 @@ src/ui/controlador.js, src/ui/app.js     # integración y DOM
 src/extra/explicaciones.js               # explicaciones del tema (EXTRA, fuera de RF)
 src/extra/mazosEjemplo.js                # 18 mazos de ejemplo para cargar con un clic (EXTRA, fuera de RF)
 src/extra/categorias.js                  # categoría de cada mazo para agrupar "Tus mazos" (EXTRA, fuera de RF)
+src/extra/sonidos.js                     # sonidos sintetizados de acierto y fallo con Web Audio (EXTRA, fuera de RF)
 tests/                                   # pruebas unitarias y de integración
 docs/                                    # especificación y plan de incrementos
 ```
@@ -55,7 +56,7 @@ y abrir http://localhost:8000 en Chrome, Firefox o Edge.
 11. **Ver la explicación:** **📖 Ver explicación del tema** recorre cada pregunta con su explicación. Con **📖 Ver la explicación antes de empezar** marcada (predeterminado), **Estudiar este mazo** abre primero esa presentación; pulsa **▶ Empezar preguntas** para comenzar.
 12. **Duplicar un mazo:** **📄 Duplicar mazo** crea una copia con sus tarjetas, llamada "(copia)".
 13. **Exportar o importar varios mazos:** **⇩ Exportar todos mis mazos** descarga un solo archivo con todos tus mazos. Al importar un archivo con varios mazos, cada uno se valida por separado y se informa cuántos se importaron.
-14. **Tema y sonido:** **🌙** cambia entre tema claro y oscuro (se recuerda tu elección); **🔊** activa o silencia los sonidos de acierto y fallo. Buscar y ordenar mazos se hace desde la lista de mazos.
+14. **Tema y sonido:** **🌙** cambia entre tema claro y oscuro (se recuerda tu elección); **🔊** activa o silencia los sonidos de acierto (arpegio alegre) y fallo (wah-wah cómico); suenan al marcar Acerté o Fallé, al comprobar una respuesta escrita y al agotarse el tiempo del modo examen. Buscar y ordenar mazos se hace desde la lista de mazos.
 15. **Estudiar desde la lista:** cada mazo de "Tus mazos" tiene un botón **▶ Estudiar**. Inicia el estudio directo, sin abrir el mazo antes, y respeta las opciones marcadas (explicación previa y orden aleatorio). Si el mazo está vacío, verás el aviso de mazo vacío. El clic en el resto de la tarjeta sigue abriendo el mazo.
 16. **Cargar mazos de ejemplo:** **📚 Cargar mazos de ejemplo** (arriba de la lista) añade 18 mazos de Cálculo, Matemáticas, Electrónica, Ciberseguridad y SQL. Los que ya existan con el mismo nombre se omiten y el mensaje indica cuántos se cargaron y cuántos se omitieron.
 17. **Grupos por categoría:** "Tus mazos" agrupa los mazos bajo encabezados (Cálculo, Álgebra y trigonometría, Electrónica, etc.). Pulsa un encabezado para plegarlo o desplegarlo; la elección se recuerda en el navegador. Los mazos que creas tú van en **Otros**, al final. Al buscar, los grupos con resultados se abren solos. El orden elegido se aplica dentro de cada grupo.
@@ -72,7 +73,7 @@ Mejoras de interfaz añadidas después de los RF-01 a RF-12. No cuentan para la 
 - Orden aleatorio, barra de progreso, modo examen, resumen final de la sesión y "Repasar mis errores".
 - Ver la explicación del tema antes de empezar a estudiar (contenido en `src/extra/explicaciones.js`).
 - Duplicar mazo; exportar todos los mazos en un solo archivo e importar un archivo con varios mazos.
-- Sonidos de acierto y fallo (silenciables) y racha de días estudiando.
+- Sonidos de acierto (arpegio alegre) y fallo (wah-wah descendente) sintetizados con Web Audio, sin archivos de audio, silenciables (`src/extra/sonidos.js`), y racha de días estudiando.
 - Botón **▶ Estudiar** en cada mazo de la lista, para estudiar sin abrirlo antes.
 - Carga de 18 mazos de ejemplo con un clic, validados con el importador y sin duplicar nombres (`src/extra/mazosEjemplo.js`).
 - Tras añadir una tarjeta, el foco vuelve a Pregunta y los campos se limpian.

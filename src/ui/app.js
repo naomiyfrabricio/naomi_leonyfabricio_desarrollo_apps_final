@@ -8,6 +8,8 @@ import { explicacionDe } from '../extra/explicaciones.js';
 import { MAZOS_EJEMPLO } from '../extra/mazosEjemplo.js';
 // EXTRA: agrupación por categoría de "Tus mazos" (solo interfaz).
 import { categoriaDe, ORDEN_CATEGORIAS } from '../extra/categorias.js';
+// EXTRA: sonidos de acierto y fallo sintetizados con Web Audio (solo interfaz).
+import { tocarAcierto, tocarFallo } from '../extra/sonidos.js';
 import { normalizarNombre } from '../mazos/gestorMazos.js';
 
 const app = crearControlador(new AlmacenamientoLocal(window.localStorage));
@@ -44,7 +46,7 @@ $('btn-tema').onclick = () => {
   aplicarTema(siguiente);
 };
 
-// Preferencia de sonido (solo UI). Un pitido simple con Web Audio, sin archivos externos.
+// Preferencia de sonido (solo UI). Sonidos sintetizados con Web Audio, sin archivos externos.
 const CLAVE_SONIDO = 'flashcards.ui.sonido';
 function sonidoActivado() {
   return localStorage.getItem(CLAVE_SONIDO) !== 'off';
@@ -61,16 +63,8 @@ function reproducirSonido(tipo) {
   if (!sonidoActivado()) return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const ganancia = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = tipo === 'acierto' ? 880 : 220;
-    ganancia.gain.setValueAtTime(0.15, ctx.currentTime);
-    ganancia.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
-    osc.connect(ganancia).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.3);
-    osc.onended = () => ctx.close();
+    const duracion = tipo === 'acierto' ? tocarAcierto(ctx) : tocarFallo(ctx);
+    setTimeout(() => ctx.close().catch(() => {}), (duracion + 0.2) * 1000);
   } catch {
     // Si el navegador bloquea audio sin interacción previa, se ignora sin romper la app.
   }
