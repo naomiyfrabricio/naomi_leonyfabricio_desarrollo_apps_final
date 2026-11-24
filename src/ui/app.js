@@ -59,14 +59,35 @@ $('btn-sonido').onclick = () => {
   localStorage.setItem(CLAVE_SONIDO, sonidoActivado() ? 'off' : 'on');
   pintarBotonSonido();
 };
-function reproducirSonido(tipo) {
+let audioCtx = null;
+function obtenerAudio() {
+  if (!audioCtx) {
+    const Clase = window.AudioContext || window.webkitAudioContext;
+    if (!Clase) return null;
+    audioCtx = new Clase();
+  }
+  return audioCtx;
+}
+function desbloquearAudio() {
+  try {
+    const ctx = obtenerAudio();
+    if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+  } catch {
+    // Sin audio disponible la app sigue funcionando en silencio.
+  }
+}
+for (const evento of ['pointerdown', 'keydown', 'click']) {
+  document.addEventListener(evento, desbloquearAudio, { passive: true });
+}
+async function reproducirSonido(tipo) {
   if (!sonidoActivado()) return;
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const duracion = tipo === 'acierto' ? tocarAcierto(ctx) : tocarFallo(ctx);
-    setTimeout(() => ctx.close().catch(() => {}), (duracion + 0.2) * 1000);
+    const ctx = obtenerAudio();
+    if (!ctx) return;
+    if (ctx.state !== 'running') await ctx.resume();
+    if (tipo === 'acierto') tocarAcierto(ctx); else tocarFallo(ctx);
   } catch {
-    // Si el navegador bloquea audio sin interacción previa, se ignora sin romper la app.
+    // Si el navegador bloquea audio, se ignora sin romper la app.
   }
 }
 
