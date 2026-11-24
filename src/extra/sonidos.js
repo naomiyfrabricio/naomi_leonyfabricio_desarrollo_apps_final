@@ -1,7 +1,20 @@
 // EXTRA fuera del alcance de RF-01..12 (ver docs/plan_incrementos.md §1): sonidos sintetizados de acierto y fallo. Solo UI, sin archivos de audio.
 // Reciben un AudioContext ya creado y devuelven la duración en segundos para que quien lo creó lo cierre.
 
-function tono(ctx, { onda, f0, f1, inicio, dur, pico, filtro }) {
+function crearSalida(ctx, volumen) {
+  const master = ctx.createGain();
+  master.gain.value = volumen;
+  const compresor = ctx.createDynamicsCompressor();
+  compresor.threshold.value = -6;
+  compresor.knee.value = 0;
+  compresor.ratio.value = 20;
+  compresor.attack.value = 0.001;
+  compresor.release.value = 0.25;
+  master.connect(compresor).connect(ctx.destination);
+  return master;
+}
+
+function tono(ctx, destino, { onda, f0, f1, inicio, dur, pico, filtro }) {
   const osc = ctx.createOscillator();
   const ganancia = ctx.createGain();
   osc.type = onda;
@@ -20,22 +33,24 @@ function tono(ctx, { onda, f0, f1, inicio, dur, pico, filtro }) {
     osc.connect(wah);
     nodo = wah;
   }
-  nodo.connect(ganancia).connect(ctx.destination);
+  nodo.connect(ganancia).connect(destino);
   osc.start(inicio);
   osc.stop(inicio + dur + 0.02);
 }
 
 export function tocarAcierto(ctx) {
+  const destino = crearSalida(ctx, 3);
   const t0 = ctx.currentTime + 0.01;
   [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
-    tono(ctx, { onda: 'square', f0: f, inicio: t0 + i * 0.07, dur: 0.08, pico: 0.05 }));
+    tono(ctx, destino, { onda: 'square', f0: f, inicio: t0 + i * 0.07, dur: 0.08, pico: 0.15 }));
   const destello = t0 + 0.28;
-  tono(ctx, { onda: 'triangle', f0: 1046.5, f1: 1568, inicio: destello, dur: 0.14, pico: 0.07 });
-  tono(ctx, { onda: 'triangle', f0: 1318.5, inicio: destello, dur: 0.14, pico: 0.05 });
+  tono(ctx, destino, { onda: 'triangle', f0: 1046.5, f1: 1568, inicio: destello, dur: 0.14, pico: 0.2 });
+  tono(ctx, destino, { onda: 'triangle', f0: 1318.5, inicio: destello, dur: 0.14, pico: 0.15 });
   return 0.42;
 }
 
 export function tocarFallo(ctx) {
+  const destino = crearSalida(ctx, 4);
   const t0 = ctx.currentTime + 0.01;
   const notas = [
     { f0: 392, f1: 277, dur: 0.2 },
@@ -43,13 +58,13 @@ export function tocarFallo(ctx) {
     { f0: 311, f1: 196, dur: 0.26 },
   ];
   notas.forEach((n, i) =>
-    tono(ctx, {
+    tono(ctx, destino, {
       onda: 'sawtooth',
       f0: n.f0,
       f1: n.f1,
       inicio: t0 + i * 0.22,
       dur: n.dur,
-      pico: 0.08,
+      pico: 0.22,
       filtro: { desde: 900, hasta: 220 },
     }));
   return 0.71;
