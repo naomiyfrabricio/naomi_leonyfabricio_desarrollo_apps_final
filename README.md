@@ -25,6 +25,7 @@ src/almacenamiento/                      # memoria y localStorage, misma interfa
 src/ui/controlador.js, src/ui/app.js     # integración y DOM
 src/extra/explicaciones.js               # explicaciones del tema (EXTRA, fuera de RF)
 src/extra/mazosEjemplo.js                # 18 mazos de ejemplo para cargar con un clic (EXTRA, fuera de RF)
+src/extra/categorias.js                  # categoría de cada mazo para agrupar "Tus mazos" (EXTRA, fuera de RF)
 tests/                                   # pruebas unitarias y de integración
 docs/                                    # especificación y plan de incrementos
 ```
@@ -57,6 +58,7 @@ y abrir http://localhost:8000 en Chrome, Firefox o Edge.
 14. **Tema y sonido:** **🌙** cambia entre tema claro y oscuro (se recuerda tu elección); **🔊** activa o silencia los sonidos de acierto y fallo. Buscar y ordenar mazos se hace desde la lista de mazos.
 15. **Estudiar desde la lista:** cada mazo de "Tus mazos" tiene un botón **▶ Estudiar**. Inicia el estudio directo, sin abrir el mazo antes, y respeta las opciones marcadas (explicación previa y orden aleatorio). Si el mazo está vacío, verás el aviso de mazo vacío. El clic en el resto de la tarjeta sigue abriendo el mazo.
 16. **Cargar mazos de ejemplo:** **📚 Cargar mazos de ejemplo** (arriba de la lista) añade 18 mazos de Cálculo, Matemáticas, Electrónica, Ciberseguridad y SQL. Los que ya existan con el mismo nombre se omiten y el mensaje indica cuántos se cargaron y cuántos se omitieron.
+17. **Grupos por categoría:** "Tus mazos" agrupa los mazos bajo encabezados (Cálculo, Álgebra y trigonometría, Electrónica, etc.). Pulsa un encabezado para plegarlo o desplegarlo; la elección se recuerda en el navegador. Los mazos que creas tú van en **Otros**, al final. Al buscar, los grupos con resultados se abren solos. El orden elegido se aplica dentro de cada grupo.
 
 Todos los datos se guardan en el `localStorage` del navegador: funcionan sin conexión y persisten al recargar la página, pero son propios de ese navegador y ese dispositivo (no se sincronizan entre equipos salvo exportando/importando el archivo).
 
@@ -74,6 +76,7 @@ Mejoras de interfaz añadidas después de los RF-01 a RF-12. No cuentan para la 
 - Botón **▶ Estudiar** en cada mazo de la lista, para estudiar sin abrirlo antes.
 - Carga de 18 mazos de ejemplo con un clic, validados con el importador y sin duplicar nombres (`src/extra/mazosEjemplo.js`).
 - Tras añadir una tarjeta, el foco vuelve a Pregunta y los campos se limpian.
+- Agrupación de "Tus mazos" por categoría, plegable y recordada en el navegador (`src/extra/categorias.js`).
 - Desplazamiento suave a la sección que se abre: detalle del mazo, modo estudio y explicación del tema.
 
 Los extras son de interfaz y no tienen pruebas automáticas propias. Las 61 pruebas cubren los RF y la lógica de `src/mazos`, `src/tarjetas`, `src/estudio`, `src/estadisticas`, `src/intercambio` y `src/almacenamiento`. Quedan fuera la repetición espaciada y cualquier uso de IA o internet; la app sigue funcionando sin conexión (RNF-09).

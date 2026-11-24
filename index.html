@@ -163,7 +163,20 @@
       background: color-mix(in srgb, var(--acento, var(--azul)) 20%, var(--superficie));
       border-radius: 999px; padding: 2px 10px;
     }
-    #lista-mazos .lista-vacia-aviso { color: var(--texto-suave); font-size: .9rem; padding: 4px 0; }
+    #lista-mazos .lista-vacia-aviso { color: var(--texto-suave); font-size: .9rem; padding: 4px 0; margin: 0; }
+    /* Grupos por categoría (extra, src/extra/categorias.js) */
+    #lista-mazos .grupo-mazos { background: var(--fondo); border: 1px solid var(--borde); border-radius: var(--radio); }
+    #lista-mazos .grupo-mazos > summary {
+      display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer;
+      font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--azul-oscuro);
+      list-style: none; border-radius: var(--radio);
+    }
+    #lista-mazos .grupo-mazos > summary::-webkit-details-marker { display: none; }
+    #lista-mazos .grupo-mazos > summary::before { content: '▸'; display: inline-block; transition: transform .15s; }
+    #lista-mazos .grupo-mazos[open] > summary::before { transform: rotate(90deg); }
+    #lista-mazos .grupo-mazos > summary:focus-visible { outline: 2px solid var(--azul); outline-offset: 1px; }
+    #lista-mazos .grupo-contador { margin-left: auto; font-weight: 400; text-transform: none; letter-spacing: normal; color: var(--texto-suave); }
+    #lista-mazos .grupo-lista { list-style: none; padding: 0 8px 8px; margin: 0; display: grid; gap: 8px; }
 
     /* Detalle de mazo */
     #titulo-mazo { font-size: 1.15rem; margin: 0; }
@@ -282,7 +295,7 @@
     </div>
     <button type="button" id="btn-cargar-ejemplos" class="secundario">📚 Cargar mazos de ejemplo</button>
     <p id="msg-ejemplos" class="mensaje"></p>
-    <ul id="lista-mazos"></ul>
+    <div id="lista-mazos"></div>
     <p id="msg-buscar-mazo" class="mensaje"></p>
   </section>
 

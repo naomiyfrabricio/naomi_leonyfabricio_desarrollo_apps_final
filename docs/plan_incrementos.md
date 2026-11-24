@@ -22,6 +22,7 @@ Tags en `main`: v0.1.0, v0.2.0, v0.3.0 y v0.4.0; 61 de 61 pruebas pasan.
 - No se incluyen sincronización en la nube, cuentas, repetición espaciada avanzada, multimedia, colaboración en tiempo real ni interfaz multiidioma (especificación, §4).
 - Existen funciones extra de interfaz fuera de los RF-01 a RF-12. No cuentan para la evaluación y no modifican los RF ni sus pruebas. La lista está en el README, sección «Funciones extra (fuera del alcance evaluado)».
 - Extra del 2026-11-22 (marcado como extra, fuera de RF-01 a RF-12): botón «▶ Estudiar» por mazo en la lista, carga de mazos de ejemplo (`src/extra/mazosEjemplo.js`), foco en Pregunta tras añadir tarjeta y desplazamiento suave a las secciones abiertas. Solo tocan la interfaz (`src/ui/app.js`, `index.html`).
+- Extra del 2026-11-23 (marcado como extra, fuera de RF-01 a RF-12): agrupación de «Tus mazos» por categoría, plegable y recordada en `localStorage` (`src/extra/categorias.js`, clave `flashcards.ui.gruposPlegados`). Solo toca la interfaz (`src/ui/app.js`, `index.html`); no cambia `src/mazos`, `src/tarjetas`, `src/estudio`, `src/estadisticas`, `src/intercambio` ni `src/almacenamiento`.
 
 ## 2. Inventario de requerimientos funcionales
 
@@ -194,6 +195,7 @@ No marcar como cumplido hasta contar con evidencia:
 | 2026-11-10 | Se distingue el avance programado (50 % al cierre de la semana 13) del real (75 %). El incremento 3 queda registrado como terminado anticipadamente; el 4 se mantiene en la semana 15. | Reportar el cumplimiento del calendario académico sin ocultar el trabajo adelantado. | Equipo |
 | 2026-11-20 | Se documentan las funciones extra de interfaz (fuera de RF-01 a RF-12) y la opción de ver la explicación del tema antes de estudiar. | El proyecto ya implementa los 4 incrementos y se añadieron mejoras de interfaz solicitadas por la autora | Naomi (solicitud propia) |
 | 2026-11-22 | Extra (fuera de RF-01 a RF-12): botón «▶ Estudiar» en cada mazo de la lista, carga de mazos de ejemplo, foco en Pregunta tras añadir tarjeta y desplazamiento suave a las secciones que se abren. | Reducir los pasos para usar la app; no cambia la lógica de mazos, tarjetas, estudio, estadísticas, intercambio ni almacenamiento. | Naomi (solicitud propia) |
+| 2026-11-23 | Extra (fuera de RF-01 a RF-12): «Tus mazos» se agrupa por categoría, con grupos plegables que se recuerdan en `localStorage` (clave `flashcards.ui.gruposPlegados`). | Ordenar una lista plana de 18 mazos de ejemplo; solo cambia la interfaz, no los datos guardados ni la lógica de mazos, tarjetas, estudio, estadísticas, intercambio ni almacenamiento. | Naomi (solicitud propia) |
 
 ## 11. Referencias de la especificación
 

@@ -6,6 +6,8 @@ import { SesionEstudio } from '../estudio/sesionEstudio.js';
 import { explicacionDe } from '../extra/explicaciones.js';
 // EXTRA: mazos de ejemplo para cargar con un clic (se validan con el importador de RF-10/RF-12).
 import { MAZOS_EJEMPLO } from '../extra/mazosEjemplo.js';
+// EXTRA: agrupación por categoría de "Tus mazos" (solo interfaz).
+import { categoriaDe, ORDEN_CATEGORIAS } from '../extra/categorias.js';
 import { normalizarNombre } from '../mazos/gestorMazos.js';
 
 const app = crearControlador(new AlmacenamientoLocal(window.localStorage));
@@ -147,6 +149,24 @@ function mazosFiltradosYOrdenados() {
   return mazos;
 }
 
+// EXTRA: grupos plegados de "Tus mazos" (solo UI). Un fallo de almacenamiento no rompe la lista.
+const CLAVE_GRUPOS_PLEGADOS = 'flashcards.ui.gruposPlegados';
+function gruposPlegados() {
+  try {
+    const guardado = JSON.parse(localStorage.getItem(CLAVE_GRUPOS_PLEGADOS) || '[]');
+    return new Set(Array.isArray(guardado) ? guardado : []);
+  } catch {
+    return new Set();
+  }
+}
+function guardarGruposPlegados(conjunto) {
+  try {
+    localStorage.setItem(CLAVE_GRUPOS_PLEGADOS, JSON.stringify([...conjunto]));
+  } catch {
+    // Sin almacenamiento, los grupos se muestran igual pero no se recuerdan.
+  }
+}
+
 function pintarMazos() {
   const lista = $('lista-mazos');
   lista.innerHTML = '';
@@ -158,41 +178,80 @@ function pintarMazos() {
   $('btn-cargar-ejemplos').className = hayMazos ? 'secundario' : '';
 
   if (!hayMazos) {
-    const aviso = document.createElement('li');
+    const aviso = document.createElement('p');
     aviso.className = 'lista-vacia-aviso';
     aviso.textContent = 'Aún no tienes mazos. Crea el primero arriba.';
     lista.appendChild(aviso);
     return;
   }
 
-  for (const { mazo: m, porcentaje: pct } of filtrados) {
-    const li = document.createElement('li');
-    li.style.setProperty('--acento', colorMazo(m.id));
-
-    const nombre = document.createElement('span');
-    nombre.className = 'mazo-nombre';
-    nombre.textContent = m.nombre;
-
-    const meta = document.createElement('span');
-    meta.className = 'mazo-meta';
-    meta.textContent = `${m.tarjetas.length} tarjeta(s)`;
-
-    const info = document.createElement('span');
-    info.append(nombre, document.createElement('br'), meta);
-
-    const badge = document.createElement('span');
-    badge.className = 'mazo-badge';
-    badge.textContent = `${pct} %`;
-
-    const abrir = boton('', () => abrirMazo(m.id), 'btn-abrir-mazo');
-    abrir.append(info, badge);
-
-    // EXTRA: estudiar sin abrir el mazo antes (mismas opciones de estudio que el detalle).
-    const estudiar = boton('▶ Estudiar', () => estudiarDesdeLista(m.id), 'btn-estudiar-mazo');
-
-    li.append(abrir, estudiar);
-    lista.appendChild(li);
+  const porCategoria = new Map();
+  for (const item of filtrados) {
+    const categoria = categoriaDe(item.mazo.nombre);
+    if (!porCategoria.has(categoria)) porCategoria.set(categoria, []);
+    porCategoria.get(categoria).push(item);
   }
+  const plegados = gruposPlegados();
+  for (const categoria of ORDEN_CATEGORIAS) {
+    const items = porCategoria.get(categoria);
+    if (!items) continue;
+
+    const grupo = document.createElement('details');
+    grupo.className = 'grupo-mazos';
+    grupo.open = Boolean(texto) || !plegados.has(categoria);
+    grupo.addEventListener('toggle', () => {
+      if ($('buscar-mazo').value.trim()) return;
+      const conjunto = gruposPlegados();
+      if (grupo.open) conjunto.delete(categoria); else conjunto.add(categoria);
+      guardarGruposPlegados(conjunto);
+    });
+
+    const resumen = document.createElement('summary');
+    const nombreCategoria = document.createElement('span');
+    nombreCategoria.textContent = categoria;
+    const contador = document.createElement('span');
+    contador.className = 'grupo-contador';
+    contador.textContent = `${items.length} mazo(s)`;
+    resumen.append(nombreCategoria, contador);
+
+    const listaGrupo = document.createElement('ul');
+    listaGrupo.className = 'grupo-lista';
+    grupo.append(resumen, listaGrupo);
+    lista.appendChild(grupo);
+
+    for (const { mazo, porcentaje } of items) {
+      pintarFilaMazo(listaGrupo, mazo, porcentaje);
+    }
+  }
+}
+
+function pintarFilaMazo(lista, m, pct) {
+  const li = document.createElement('li');
+  li.style.setProperty('--acento', colorMazo(m.id));
+
+  const nombre = document.createElement('span');
+  nombre.className = 'mazo-nombre';
+  nombre.textContent = m.nombre;
+
+  const meta = document.createElement('span');
+  meta.className = 'mazo-meta';
+  meta.textContent = `${m.tarjetas.length} tarjeta(s)`;
+
+  const info = document.createElement('span');
+  info.append(nombre, document.createElement('br'), meta);
+
+  const badge = document.createElement('span');
+  badge.className = 'mazo-badge';
+  badge.textContent = `${pct} %`;
+
+  const abrir = boton('', () => abrirMazo(m.id), 'btn-abrir-mazo');
+  abrir.append(info, badge);
+
+  // EXTRA: estudiar sin abrir el mazo antes (mismas opciones de estudio que el detalle).
+  const estudiar = boton('▶ Estudiar', () => estudiarDesdeLista(m.id), 'btn-estudiar-mazo');
+
+  li.append(abrir, estudiar);
+  lista.appendChild(li);
 }
 
 function pintarTarjetas() {
