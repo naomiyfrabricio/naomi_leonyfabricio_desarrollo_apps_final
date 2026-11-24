@@ -40,18 +40,18 @@ function tono(ctx, destino, { onda, f0, f1, inicio, dur, pico, filtro }) {
 
 export function tocarAcierto(ctx) {
   const destino = crearSalida(ctx, 3);
-  const t0 = ctx.currentTime + 0.01;
+  const t0 = ctx.currentTime + 0.06;
   [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
     tono(ctx, destino, { onda: 'square', f0: f, inicio: t0 + i * 0.07, dur: 0.08, pico: 0.15 }));
   const destello = t0 + 0.28;
   tono(ctx, destino, { onda: 'triangle', f0: 1046.5, f1: 1568, inicio: destello, dur: 0.14, pico: 0.2 });
   tono(ctx, destino, { onda: 'triangle', f0: 1318.5, inicio: destello, dur: 0.14, pico: 0.15 });
-  return 0.42;
+  return 0.47;
 }
 
 export function tocarFallo(ctx) {
   const destino = crearSalida(ctx, 4);
-  const t0 = ctx.currentTime + 0.01;
+  const t0 = ctx.currentTime + 0.06;
   const notas = [
     { f0: 392, f1: 277, dur: 0.2 },
     { f0: 349, f1: 247, dur: 0.2 },
@@ -67,5 +67,5 @@ export function tocarFallo(ctx) {
       pico: 0.22,
       filtro: { desde: 900, hasta: 220 },
     }));
-  return 0.71;
+  return 0.76;
 }

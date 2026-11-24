@@ -55,10 +55,6 @@ function pintarBotonSonido() {
   $('btn-sonido').textContent = sonidoActivado() ? '🔊' : '🔇';
 }
 pintarBotonSonido();
-$('btn-sonido').onclick = () => {
-  localStorage.setItem(CLAVE_SONIDO, sonidoActivado() ? 'off' : 'on');
-  pintarBotonSonido();
-};
 let audioCtx = null;
 function obtenerAudio() {
   if (!audioCtx) {
@@ -68,10 +64,48 @@ function obtenerAudio() {
   }
   return audioCtx;
 }
+// Fuente inaudible (ganancia 0.0001) que mantiene activa la salida de audio entre sonidos.
+let keepAlive = null;
+function arrancarKeepAlive(ctx) {
+  if (keepAlive) return;
+  try {
+    const osc = ctx.createOscillator();
+    const ganancia = ctx.createGain();
+    osc.frequency.value = 20;
+    ganancia.gain.value = 0.0001;
+    osc.connect(ganancia).connect(ctx.destination);
+    osc.start();
+    keepAlive = { osc, ganancia };
+  } catch {
+    keepAlive = null;
+  }
+}
+function detenerKeepAlive() {
+  if (!keepAlive) return;
+  try {
+    keepAlive.osc.stop();
+    keepAlive.osc.disconnect();
+    keepAlive.ganancia.disconnect();
+  } catch {
+    // Si ya estaba detenido no hay nada que hacer.
+  }
+  keepAlive = null;
+}
+$('btn-sonido').onclick = () => {
+  localStorage.setItem(CLAVE_SONIDO, sonidoActivado() ? 'off' : 'on');
+  pintarBotonSonido();
+  if (sonidoActivado()) {
+    const ctx = obtenerAudio();
+    if (ctx) arrancarKeepAlive(ctx);
+  } else {
+    detenerKeepAlive();
+  }
+};
 function desbloquearAudio() {
   try {
     const ctx = obtenerAudio();
     if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+    if (ctx && sonidoActivado()) arrancarKeepAlive(ctx);
   } catch {
     // Sin audio disponible la app sigue funcionando en silencio.
   }
