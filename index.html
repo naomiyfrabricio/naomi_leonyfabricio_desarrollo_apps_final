@@ -144,10 +144,6 @@
     #lista-mazos { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
     #lista-mazos li { display: flex; gap: 8px; align-items: stretch; }
     #lista-mazos .btn-abrir-mazo { flex: 1 1 auto; min-width: 0; }
-    #lista-mazos .btn-estudiar-mazo {
-      flex: none; width: auto; align-self: center; padding: 10px 14px; border-radius: 14px; white-space: nowrap;
-      background: var(--azul); color: #fff; border-color: var(--azul); border-left-width: 1px;
-    }
     #btn-cargar-ejemplos { width: 100%; margin-bottom: 8px; }
     #lista-mazos button {
       width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -198,7 +194,6 @@
     .opcion-estudio input[type="number"] { padding: 4px 6px; }
 
     /* Presentación / explicación del tema (extra, ver docs/plan_incrementos.md §1) */
-    .panel-presentacion { background: linear-gradient(180deg, var(--superficie), var(--azul-claro) 180%); }
     #posicion-presentacion { text-align: center; color: var(--texto-suave); font-weight: 600; margin: 0 0 8px; }
     #barra-progreso-presentacion { height: 100%; width: 0%; background: var(--azul); border-radius: 999px; transition: width .25s ease; }
     .tarjeta-presentacion {
@@ -248,6 +243,44 @@
       #respuesta:not(:empty), #tarjeta.resultado-acierto, #tarjeta.resultado-fallo { animation: none; }
     }
 
+    [hidden] { display: none !important; }
+    body.sin-scroll { overflow: hidden; }
+    .subtitulo { margin: 0; color: var(--texto-suave); font-size: .9rem; }
+    #slot-ejemplos-vacio:not(:has(#caja-ejemplos)) { display: none; }
+
+    /* Zona de subir archivo y "Más opciones" (pantalla principal) */
+    .zona-subida { border: 2px dashed var(--azul); background: var(--azul-claro); }
+    .zona-subida h2 { margin-bottom: 4px; }
+    .zona-subida p.ayuda { margin: 0 0 10px; color: var(--texto-suave); font-size: .9rem; }
+    .mas-opciones { margin-bottom: 16px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--superficie); }
+    .mas-opciones > summary { cursor: pointer; padding: 10px 14px; color: var(--texto-suave); font-size: .9rem; font-weight: 600; border-radius: var(--radio); }
+    .mas-opciones > summary:focus-visible { outline: 2px solid var(--azul); outline-offset: 1px; }
+    .mas-opciones-cuerpo { padding: 0 14px 14px; display: grid; gap: 10px; }
+    .mas-opciones-cuerpo h3 { margin: 6px 0 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .03em; color: var(--texto-suave); }
+
+    /* Pantallas a pantalla completa (estudio y editar) */
+    .pantalla {
+      position: fixed; inset: 0; z-index: 1000; background: var(--fondo); color: var(--texto);
+      display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain;
+    }
+    .pantalla-barra {
+      position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 8px 12px; background: var(--superficie); border-bottom: 1px solid var(--borde);
+    }
+    .pantalla-barra .nombre-pantalla { flex: 1 1 120px; min-width: 0; font-size: .95rem; overflow-wrap: anywhere; }
+    .barra-acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+    .barra-acciones button { width: auto; padding: 6px 12px; font-size: .85rem; }
+    #btn-editar { letter-spacing: .04em; }
+    .pantalla-cuerpo { width: 100%; max-width: 760px; margin: 0 auto; padding: 20px 16px 40px; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+    .pantalla-cuerpo.editar { justify-content: flex-start; max-width: 640px; }
+    #panel-opciones-estudio { width: 100%; max-width: 760px; margin: 0 auto; padding: 12px 16px 0; }
+    #panel-opciones-estudio .caja { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px; }
+    #aviso-vacio { text-align: center; font-size: 1.05rem; padding: 24px 12px; }
+    #pantalla-estudio #tarjeta { min-height: 38vh; padding: 32px 20px; }
+    #pantalla-estudio #pregunta { font-size: 1.5rem; }
+    #pantalla-estudio #respuesta { font-size: 1.2rem; }
+    #pantalla-estudio .tarjeta-presentacion { min-height: 38vh; }
+
     @media (max-width: 420px) {
       body { padding: 14px 10px 36px; }
       .panel { padding: 12px; }
@@ -255,129 +288,170 @@
   </style>
 </head>
 <body>
-  <header class="app-header">
-    <div class="botones-header">
-      <button type="button" id="btn-sonido" aria-label="Activar o silenciar sonidos">🔊</button>
-      <button type="button" id="btn-tema" aria-label="Cambiar tema claro/oscuro">🌙</button>
-    </div>
-    <h1><span class="emoji-titulo">📚</span> Flashcards · Cálculo y Lógica</h1>
-    <p>Crea mazos, repasa y lleva el control de tu avance.</p>
-    <p id="racha-estudio"></p>
-  </header>
-
-  <section class="panel">
-    <h2>➕ Crear un mazo</h2>
-    <form id="form-mazo">
-      <input id="nombre-mazo" placeholder="Nombre del nuevo mazo" aria-label="Nombre del mazo">
-      <button type="submit">Crear mazo</button>
-    </form>
-    <p id="msg-mazo" class="mensaje"></p>
-
-    <h3>Importar desde archivo</h3>
-    <form id="form-importar">
-      <input id="archivo-importar" type="file" accept="application/json,.json" aria-label="Archivo de mazo a importar">
-      <button type="submit" class="secundario">Importar mazo(s) desde archivo</button>
-    </form>
-    <p id="msg-importar" class="mensaje"></p>
-    <button type="button" id="btn-exportar-todos" class="secundario">⇩ Exportar todos mis mazos</button>
-  </section>
-
-  <section class="panel">
-    <h2>🗂️ Tus mazos</h2>
-    <div class="toolbar-mazos">
-      <input id="buscar-mazo" type="search" placeholder="Buscar mazo por nombre..." aria-label="Buscar mazo">
-      <select id="ordenar-mazos" aria-label="Ordenar mazos">
-        <option value="nombre">Nombre (A-Z)</option>
-        <option value="porcentaje-desc">Avance (mayor a menor)</option>
-        <option value="porcentaje-asc">Avance (menor a mayor)</option>
-        <option value="tarjetas-desc">Tarjetas (más a menos)</option>
-      </select>
-    </div>
-    <button type="button" id="btn-cargar-ejemplos" class="secundario">📚 Cargar mazos de ejemplo</button>
-    <p id="msg-ejemplos" class="mensaje"></p>
-    <div id="lista-mazos"></div>
-    <p id="msg-buscar-mazo" class="mensaje"></p>
-  </section>
-
-  <section id="seccion-mazo" class="panel" hidden>
-    <h2 id="titulo-mazo"></h2>
-    <p id="estadisticas"></p>
-
-    <button id="btn-ver-explicacion" type="button" class="secundario" style="margin-bottom: 4px;">📖 Ver explicación del tema</button>
-
-    <h3>Datos del mazo</h3>
-    <form id="form-renombrar">
-      <input id="nuevo-nombre" aria-label="Nuevo nombre del mazo">
-      <div class="fila">
-        <button type="submit" class="secundario">Renombrar</button>
-        <button type="button" id="btn-eliminar-mazo" class="peligro">Eliminar mazo</button>
+  <main id="app-principal">
+    <header class="app-header">
+      <div class="botones-header">
+        <button type="button" id="btn-sonido" aria-label="Activar o silenciar sonidos">🔊</button>
+        <button type="button" id="btn-tema" aria-label="Cambiar tema claro/oscuro">🌙</button>
       </div>
-    </form>
-    <div class="fila" style="margin-top: 8px;">
-      <button type="button" id="btn-exportar-mazo" class="secundario">⇩ Exportar este mazo</button>
-      <button type="button" id="btn-duplicar-mazo" class="secundario">📄 Duplicar mazo</button>
+      <h1><span class="emoji-titulo">📚</span> Flashcards · Cálculo y Lógica</h1>
+      <p class="subtitulo">Elige un tema para estudiar o sube un archivo.</p>
+      <p id="racha-estudio"></p>
+    </header>
+
+    <section class="panel">
+      <h2>🗂️ Tus mazos</h2>
+      <div class="toolbar-mazos">
+        <input id="buscar-mazo" type="search" placeholder="Buscar mazo por nombre..." aria-label="Buscar mazo">
+        <select id="ordenar-mazos" aria-label="Ordenar mazos">
+          <option value="nombre">Nombre (A-Z)</option>
+          <option value="porcentaje-desc">Avance (mayor a menor)</option>
+          <option value="porcentaje-asc">Avance (menor a mayor)</option>
+          <option value="tarjetas-desc">Tarjetas (más a menos)</option>
+        </select>
+      </div>
+      <div id="slot-ejemplos-vacio">
+        <div id="caja-ejemplos">
+          <button type="button" id="btn-cargar-ejemplos" class="secundario">📚 Cargar mazos de ejemplo</button>
+          <p id="msg-ejemplos" class="mensaje"></p>
+        </div>
+      </div>
+      <div id="lista-mazos"></div>
+      <p id="msg-buscar-mazo" class="mensaje"></p>
+      <p id="msg-global" class="mensaje"></p>
+    </section>
+
+    <section class="panel zona-subida">
+      <h2>⬆️ Subir un archivo</h2>
+      <p class="ayuda">Elige un archivo .json (uno o varios mazos) y se crearán sus flashcards.</p>
+      <form id="form-importar">
+        <input id="archivo-importar" type="file" accept="application/json,.json" aria-label="Archivo de mazo a importar">
+        <button type="submit" class="secundario">Importar mazo(s) desde archivo</button>
+      </form>
+      <p id="msg-importar" class="mensaje"></p>
+    </section>
+
+    <details class="mas-opciones">
+      <summary>Más opciones</summary>
+      <div class="mas-opciones-cuerpo">
+        <h3>Crear un mazo</h3>
+        <form id="form-mazo">
+          <input id="nombre-mazo" placeholder="Nombre del nuevo mazo" aria-label="Nombre del mazo">
+          <button type="submit">Crear mazo</button>
+        </form>
+        <p id="msg-mazo" class="mensaje"></p>
+        <h3>Copias y ejemplos</h3>
+        <button type="button" id="btn-exportar-todos" class="secundario">⇩ Exportar todos mis mazos</button>
+        <p id="msg-exportar" class="mensaje"></p>
+        <div id="slot-ejemplos-opciones"></div>
+      </div>
+    </details>
+  </main>
+
+  <div id="pantalla-estudio" class="pantalla" role="dialog" aria-modal="true" aria-labelledby="nombre-estudio" hidden>
+    <div class="pantalla-barra">
+      <strong id="nombre-estudio" class="nombre-pantalla"></strong>
+      <div class="barra-acciones">
+        <button type="button" id="btn-opciones-estudio" class="secundario" aria-expanded="false" aria-controls="panel-opciones-estudio" aria-label="Opciones de estudio" title="Opciones de estudio">⚙</button>
+        <button type="button" id="btn-editar">EDITAR</button>
+        <button type="button" id="btn-salir-estudio" class="secundario">✕ Salir</button>
+      </div>
     </div>
-
-    <h3>Tarjetas</h3>
-    <ul id="lista-tarjetas"></ul>
-    <form id="form-tarjeta" style="margin-top: 10px;">
-      <input id="pregunta-in" placeholder="Pregunta" aria-label="Pregunta">
-      <input id="respuesta-in" placeholder="Respuesta" aria-label="Respuesta">
-      <button type="submit" id="btn-tarjeta">Añadir tarjeta</button>
-    </form>
-    <p id="msg-tarjeta" class="mensaje"></p>
-
-    <h3>Opciones de estudio</h3>
-    <label class="opcion-estudio"><input type="checkbox" id="chk-aleatorio"> 🔀 Orden aleatorio</label>
-    <label class="opcion-estudio">
-      <input type="checkbox" id="chk-examen"> ⏱ Modo examen, con
-      <input type="number" id="examen-segundos" value="20" min="5" max="300" style="width: 70px; display: inline-block;"> segundos por tarjeta
-    </label>
-    <label class="opcion-estudio"><input type="checkbox" id="chk-explicacion-previa" checked> 📖 Ver la explicación antes de empezar</label>
-    <button id="btn-estudiar" type="button" style="margin-top: 10px;">▶ Estudiar este mazo</button>
-  </section>
-
-  <section id="seccion-estudio" class="panel" hidden>
-    <h2>🧠 Modo estudio</h2>
-    <p id="posicion"></p>
-    <div class="barra-progreso"><div id="barra-progreso-relleno"></div></div>
-    <p id="temporizador-estudio"></p>
-    <div id="tarjeta"><div id="pregunta"></div><div id="respuesta"></div></div>
-
-    <form id="form-comprobar" style="margin-top: 12px;">
-      <input id="respuesta-usuario" placeholder="Escribe tu respuesta..." aria-label="Tu respuesta" autocomplete="off">
-      <button type="submit" id="btn-comprobar">Comprobar respuesta</button>
-    </form>
-    <p id="msg-comprobar" class="mensaje"></p>
-
-    <div class="fila" style="margin-top: 8px;">
-      <button id="btn-revelar" type="button" class="secundario">No lo sé, mostrar respuesta</button>
-      <button id="btn-siguiente" type="button" class="secundario">Siguiente</button>
+    <div id="panel-opciones-estudio" hidden>
+      <div class="caja">
+        <label class="opcion-estudio"><input type="checkbox" id="chk-aleatorio"> 🔀 Orden aleatorio</label>
+        <label class="opcion-estudio">
+          <input type="checkbox" id="chk-examen"> ⏱ Modo examen, con
+          <input type="number" id="examen-segundos" value="20" min="5" max="300" style="width: 70px; display: inline-block;" aria-label="Segundos por tarjeta"> segundos por tarjeta
+        </label>
+        <label class="opcion-estudio"><input type="checkbox" id="chk-explicacion-previa" checked> 📖 Ver la explicación antes de empezar</label>
+        <button id="btn-ver-explicacion" type="button" class="secundario">📖 Ver explicación del tema</button>
+      </div>
     </div>
-    <div class="fila" style="margin-top: 8px;">
-      <button id="btn-acierto" type="button">✓ Acerté</button>
-      <button id="btn-fallo" type="button" class="peligro">✗ Fallé</button>
-    </div>
-    <p id="msg-estudio" class="mensaje ok"></p>
-    <button id="btn-repasar-errores" type="button" class="peligro" style="margin-top: 8px;" hidden>🔁 Repasar mis errores</button>
-  </section>
+    <div class="pantalla-cuerpo">
+      <p id="aviso-vacio" class="mensaje error" hidden></p>
+      <button id="btn-empezar-neutral" type="button" style="width: 100%;" hidden>▶ Empezar</button>
 
-  <section id="seccion-presentacion" class="panel panel-presentacion" hidden>
-    <h2>📖 Explicación del tema</h2>
-    <p id="posicion-presentacion"></p>
-    <div class="barra-progreso"><div id="barra-progreso-presentacion"></div></div>
-    <div class="tarjeta-presentacion">
-      <div id="pregunta-presentacion" class="pregunta-presentacion"></div>
-      <div id="respuesta-presentacion" class="respuesta-presentacion"></div>
-      <div id="explicacion-presentacion" class="explicacion-presentacion"></div>
+      <div id="seccion-estudio" hidden>
+        <p id="posicion"></p>
+        <div class="barra-progreso"><div id="barra-progreso-relleno"></div></div>
+        <p id="temporizador-estudio"></p>
+        <div id="tarjeta"><div id="pregunta"></div><div id="respuesta"></div></div>
+
+        <form id="form-comprobar" style="margin-top: 12px;">
+          <input id="respuesta-usuario" placeholder="Escribe tu respuesta..." aria-label="Tu respuesta" autocomplete="off">
+          <button type="submit" id="btn-comprobar">Comprobar respuesta</button>
+        </form>
+        <p id="msg-comprobar" class="mensaje"></p>
+
+        <div class="fila" style="margin-top: 8px;">
+          <button id="btn-revelar" type="button" class="secundario">No lo sé, mostrar respuesta</button>
+          <button id="btn-siguiente" type="button" class="secundario">Siguiente</button>
+        </div>
+        <div class="fila" style="margin-top: 8px;">
+          <button id="btn-acierto" type="button">✓ Acerté</button>
+          <button id="btn-fallo" type="button" class="peligro">✗ Fallé</button>
+        </div>
+        <p id="msg-estudio" class="mensaje ok"></p>
+        <button id="btn-repasar-errores" type="button" class="peligro" style="margin-top: 8px;" hidden>🔁 Repasar mis errores</button>
+      </div>
+
+      <div id="seccion-presentacion" hidden>
+        <h2 style="font-size: 1rem; text-align: center;">📖 Explicación del tema</h2>
+        <p id="posicion-presentacion"></p>
+        <div class="barra-progreso"><div id="barra-progreso-presentacion"></div></div>
+        <div class="tarjeta-presentacion">
+          <div id="pregunta-presentacion" class="pregunta-presentacion"></div>
+          <div id="respuesta-presentacion" class="respuesta-presentacion"></div>
+          <div id="explicacion-presentacion" class="explicacion-presentacion"></div>
+        </div>
+        <div class="fila" style="margin-top: 10px;">
+          <button id="btn-anterior-presentacion" type="button" class="secundario">◀ Anterior</button>
+          <button id="btn-siguiente-presentacion" type="button" class="secundario">Siguiente ▶</button>
+        </div>
+        <button id="btn-empezar-preguntas" type="button" style="margin-top: 8px; width: 100%;" hidden>▶ Empezar preguntas</button>
+        <button id="btn-cerrar-presentacion" type="button" class="peligro" style="margin-top: 8px; width: 100%;">Cerrar</button>
+      </div>
     </div>
-    <div class="fila" style="margin-top: 10px;">
-      <button id="btn-anterior-presentacion" type="button" class="secundario">◀ Anterior</button>
-      <button id="btn-siguiente-presentacion" type="button" class="secundario">Siguiente ▶</button>
+  </div>
+
+  <div id="pantalla-editar" class="pantalla" role="dialog" aria-modal="true" aria-labelledby="titulo-mazo" hidden>
+    <div class="pantalla-barra">
+      <strong class="nombre-pantalla">Editar</strong>
+      <div class="barra-acciones">
+        <button type="button" id="btn-volver-estudiar">← Volver a estudiar</button>
+        <button type="button" id="btn-cerrar-editar" class="secundario">✕ Cerrar</button>
+      </div>
     </div>
-    <button id="btn-empezar-preguntas" type="button" style="margin-top: 8px;" hidden>▶ Empezar preguntas</button>
-    <button id="btn-cerrar-presentacion" type="button" class="peligro" style="margin-top: 8px;">Cerrar</button>
-  </section>
+    <div class="pantalla-cuerpo editar">
+      <section id="seccion-mazo" class="panel">
+        <h2 id="titulo-mazo"></h2>
+        <p id="estadisticas"></p>
+
+        <h3>Datos del mazo</h3>
+        <form id="form-renombrar">
+          <input id="nuevo-nombre" aria-label="Nuevo nombre del mazo">
+          <div class="fila">
+            <button type="submit" class="secundario">Renombrar</button>
+            <button type="button" id="btn-eliminar-mazo" class="peligro">Eliminar mazo</button>
+          </div>
+        </form>
+        <div class="fila" style="margin-top: 8px;">
+          <button type="button" id="btn-exportar-mazo" class="secundario">⇩ Exportar este mazo</button>
+          <button type="button" id="btn-duplicar-mazo" class="secundario">📄 Duplicar mazo</button>
+        </div>
+
+        <h3>Tarjetas</h3>
+        <ul id="lista-tarjetas"></ul>
+        <form id="form-tarjeta" style="margin-top: 10px;">
+          <input id="pregunta-in" placeholder="Pregunta" aria-label="Pregunta">
+          <input id="respuesta-in" placeholder="Respuesta" aria-label="Respuesta">
+          <button type="submit" id="btn-tarjeta">Añadir tarjeta</button>
+        </form>
+        <p id="msg-tarjeta" class="mensaje"></p>
+      </section>
+    </div>
+  </div>
 
   <script type="module" src="src/ui/app.js"></script>
 </body>

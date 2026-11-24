@@ -28,6 +28,7 @@ let erroresSesion = [];     // ids de tarjetas falladas en la sesión actual, pa
 let sesionAciertos = 0;
 let sesionFallos = 0;
 let temporizador = null;
+let avanceAuto = null;
 let segundosRestantes = 0;
 
 // Preferencia de tema claro/oscuro (solo UI, separado de los datos de mazos — RNF-09).
@@ -225,11 +226,14 @@ function pintarMazos() {
   $('msg-buscar-mazo').textContent =
     hayMazos && texto && filtrados.length === 0 ? `Ningún mazo coincide con "${texto}".` : '';
   $('btn-cargar-ejemplos').className = hayMazos ? 'secundario' : '';
+  // Sin mazos, "Cargar ejemplos" va visible junto a la lista; con mazos pasa a "Más opciones".
+  const destinoEjemplos = $(hayMazos ? 'slot-ejemplos-opciones' : 'slot-ejemplos-vacio');
+  if ($('caja-ejemplos').parentElement !== destinoEjemplos) destinoEjemplos.appendChild($('caja-ejemplos'));
 
   if (!hayMazos) {
     const aviso = document.createElement('p');
     aviso.className = 'lista-vacia-aviso';
-    aviso.textContent = 'Aún no tienes mazos. Crea el primero arriba.';
+    aviso.textContent = 'Aún no tienes mazos. Carga los de ejemplo, sube un archivo o crea uno en «Más opciones».';
     lista.appendChild(aviso);
     return;
   }
@@ -293,13 +297,11 @@ function pintarFilaMazo(lista, m, pct) {
   badge.className = 'mazo-badge';
   badge.textContent = `${pct} %`;
 
-  const abrir = boton('', () => abrirMazo(m.id), 'btn-abrir-mazo');
+  const abrir = boton('', () => abrirPantallaEstudio(m.id), 'btn-abrir-mazo');
+  abrir.dataset.mazoId = String(m.id);
   abrir.append(info, badge);
 
-  // EXTRA: estudiar sin abrir el mazo antes (mismas opciones de estudio que el detalle).
-  const estudiar = boton('▶ Estudiar', () => estudiarDesdeLista(m.id), 'btn-estudiar-mazo');
-
-  li.append(abrir, estudiar);
+  li.append(abrir);
   lista.appendChild(li);
 }
 
@@ -333,34 +335,109 @@ function pintarEstadisticas() {
   $('estadisticas').textContent = `Aciertos: ${r.aciertos} · Fallos: ${r.fallos} · Avance: ${r.porcentaje} %`;
 }
 
-/** EXTRA: lleva la vista a una sección recién abierta. */
-function desplazarA(elemento) {
-  elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// REDISEÑO (solo interfaz): pantalla principal, pantalla de estudio y pantalla de edición a pantalla completa.
+let idFoco = null; // mazo cuya fila abrió la pantalla de estudio, para devolverle el foco al salir
+
+function bloquearFondo(bloquear) {
+  document.body.classList.toggle('sin-scroll', bloquear);
+  $('app-principal').inert = bloquear;
 }
 
-function abrirMazo(id, desplazar = true) {
-  cancelarTemporizador();
-  mazoActual = id;
-  const m = app.obtenerMazo(id);
+function pintarTitulosMazo() {
+  const m = app.obtenerMazo(mazoActual);
+  $('nombre-estudio').textContent = m.nombre;
   $('titulo-mazo').textContent = `${m.nombre} · ${m.tarjetas.length} tarjeta(s)`;
-  $('nuevo-nombre').value = m.nombre;
-  $('seccion-mazo').hidden = false;
-  $('seccion-estudio').hidden = true;
-  $('seccion-presentacion').hidden = true;
-  cancelarEdicion();
-  pintarTarjetas();
-  pintarEstadisticas();
-  if (desplazar) desplazarA($('seccion-mazo'));
 }
 
 function refrescar() {
   pintarMazos();
   if (mazoActual !== null && app.obtenerMazo(mazoActual)) {
-    const m = app.obtenerMazo(mazoActual);
-    $('titulo-mazo').textContent = `${m.nombre} · ${m.tarjetas.length} tarjeta(s)`;
+    pintarTitulosMazo();
     pintarTarjetas();
     pintarEstadisticas();
   }
+}
+
+function abrirPantallaEstudio(id) {
+  idFoco = id;
+  mazoActual = id;
+  sesion = null;
+  cancelarTemporizador();
+  $('aviso-vacio').hidden = true;
+  $('btn-empezar-neutral').hidden = true;
+  const m = app.obtenerMazo(id);
+  $('nuevo-nombre').value = m.nombre;
+  $('panel-opciones-estudio').hidden = true;
+  $('btn-opciones-estudio').setAttribute('aria-expanded', 'false');
+  $('msg-tarjeta').textContent = '';
+  cancelarEdicion();
+  pintarTitulosMazo();
+  $('pantalla-editar').hidden = true;
+  $('pantalla-estudio').hidden = false;
+  $('pantalla-estudio').scrollTop = 0;
+  bloquearFondo(true);
+  iniciarEstudioMazoActual();
+}
+
+/** Vuelve a la pantalla principal desde estudio o edición, cancelando la sesión en curso. */
+function salirAPrincipal() {
+  cancelarTemporizador();
+  sesion = null;
+  mazoActual = null;
+  $('aviso-vacio').hidden = true;
+  $('btn-empezar-neutral').hidden = true;
+  cancelarEdicion();
+  $('pantalla-estudio').hidden = true;
+  $('pantalla-editar').hidden = true;
+  bloquearFondo(false);
+  pintarMazos();
+  const fila = document.querySelector(`#lista-mazos [data-mazo-id="${idFoco}"]`);
+  (fila || $('buscar-mazo')).focus();
+  idFoco = null;
+}
+
+function abrirPantallaEditar() {
+  cancelarTemporizador();
+  sesion = null;
+  const m = app.obtenerMazo(mazoActual);
+  $('nuevo-nombre').value = m.nombre;
+  $('msg-tarjeta').textContent = '';
+  cancelarEdicion();
+  pintarTitulosMazo();
+  pintarTarjetas();
+  pintarEstadisticas();
+  $('pantalla-estudio').hidden = true;
+  $('pantalla-editar').hidden = false;
+  $('pantalla-editar').scrollTop = 0;
+  $('pregunta-in').focus();
+}
+
+function volverAEstudiar() {
+  cancelarEdicion();
+  $('pantalla-editar').hidden = true;
+  $('pantalla-estudio').hidden = false;
+  pintarTitulosMazo();
+  empezarEstudio();
+}
+
+$('btn-editar').onclick = abrirPantallaEditar;
+$('btn-salir-estudio').onclick = salirAPrincipal;
+$('btn-cerrar-editar').onclick = salirAPrincipal;
+$('btn-volver-estudiar').onclick = volverAEstudiar;
+$('btn-opciones-estudio').onclick = () => {
+  const panel = $('panel-opciones-estudio');
+  panel.hidden = !panel.hidden;
+  $('btn-opciones-estudio').setAttribute('aria-expanded', String(!panel.hidden));
+};
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || e.defaultPrevented) return;
+  if (!$('pantalla-estudio').hidden || !$('pantalla-editar').hidden) salirAPrincipal();
+});
+// Cambiar una opción de estudio reinicia la sesión con las opciones nuevas.
+for (const id of ['chk-aleatorio', 'chk-examen', 'examen-segundos']) {
+  $(id).onchange = () => {
+    if (sesion && !$('pantalla-estudio').hidden && $('seccion-presentacion').hidden) empezarEstudio();
+  };
 }
 
 function cancelarEdicion() {
@@ -393,6 +470,7 @@ function idTarjetaActual() {
 }
 
 function cancelarTemporizador() {
+  if (avanceAuto) { clearTimeout(avanceAuto); avanceAuto = null; }
   if (temporizador) { clearInterval(temporizador); temporizador = null; }
   $('temporizador-estudio').textContent = '';
 }
@@ -403,7 +481,7 @@ function actualizarTemporizadorUI() {
 
 function iniciarTemporizadorSiAplica() {
   cancelarTemporizador();
-  if (!$('chk-examen').checked || sesion.terminado()) return;
+  if (!$('chk-examen').checked || sesion.terminado() || sesion.marcadas.has(sesion.indice)) return;
   segundosRestantes = Number($('examen-segundos').value) || 20;
   actualizarTemporizadorUI();
   temporizador = setInterval(() => {
@@ -459,11 +537,14 @@ function iniciarSesionSobre(tarjetas) {
   sesionAciertos = 0;
   sesionFallos = 0;
   sesion = r.sesion;
+  $('aviso-vacio').hidden = true;
+  $('btn-empezar-neutral').hidden = true;
+  $('seccion-presentacion').hidden = true;
   $('seccion-estudio').hidden = false;
   limpiarComprobacion();
   pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
-  desplazarA($('seccion-estudio'));
+  $('respuesta-usuario').focus();
   return r;
 }
 
@@ -516,9 +597,9 @@ $('btn-duplicar-mazo').onclick = () => {
 
 $('btn-exportar-todos').onclick = () => {
   const mazos = app.listarMazos().map((m) => JSON.parse(app.exportarMazo(m.id).contenido));
-  if (mazos.length === 0) { mostrarMensaje($('msg-importar'), 'No tienes mazos para exportar.', true); return; }
+  if (mazos.length === 0) { mostrarMensaje($('msg-exportar'), 'No tienes mazos para exportar.', true); return; }
   descargarJSON('todos_mis_mazos.json', JSON.stringify({ version: 1, mazos }, null, 2));
-  mostrarMensaje($('msg-importar'), `${mazos.length} mazo(s) exportado(s) en un solo archivo.`, false);
+  mostrarMensaje($('msg-exportar'), `${mazos.length} mazo(s) exportado(s) en un solo archivo.`, false);
 };
 
 $('form-importar').onsubmit = (e) => {
@@ -558,12 +639,8 @@ $('form-importar').onsubmit = (e) => {
 $('btn-eliminar-mazo').onclick = () => {
   const r = app.eliminarMazo(mazoActual, window.confirm('¿Eliminar este mazo con todas sus tarjetas?'));
   if (r.ok) {
-    cancelarTemporizador();
-    mazoActual = null;
-    $('seccion-mazo').hidden = true;
-    $('seccion-estudio').hidden = true;
-    mostrarMensaje($('msg-mazo'), r.mensaje, false);
-    pintarMazos();
+    salirAPrincipal();
+    mostrarMensaje($('msg-global'), r.mensaje, false);
   } else {
     mostrarMensaje($('msg-tarjeta'), r.error, true);
   }
@@ -589,8 +666,14 @@ function empezarEstudio() {
   const tarjetas = $('chk-aleatorio').checked ? barajar(mazo.tarjetas) : [...mazo.tarjetas];
   const r = iniciarSesionSobre(tarjetas);
   if (!r.ok) {
-    mostrarMensaje($('msg-tarjeta'), r.error, true);
-    desplazarA($('msg-tarjeta'));
+    sesion = null;
+    cancelarTemporizador();
+    $('seccion-presentacion').hidden = true;
+    $('seccion-estudio').hidden = true;
+    $('btn-empezar-neutral').hidden = true;
+    mostrarMensaje($('aviso-vacio'), r.error, true);
+    $('aviso-vacio').hidden = false;
+    $('btn-editar').focus();
   }
 }
 
@@ -600,14 +683,6 @@ function iniciarEstudioMazoActual() {
   if ($('chk-explicacion-previa').checked && mazo.tarjetas.length > 0) abrirPresentacion(true);
   else empezarEstudio();
 }
-
-/** EXTRA: "▶ Estudiar" de la lista. Abre el mazo sin desplazar y estudia directamente. */
-function estudiarDesdeLista(id) {
-  abrirMazo(id, false);
-  iniciarEstudioMazoActual();
-}
-
-$('btn-estudiar').onclick = iniciarEstudioMazoActual;
 
 // EXTRA: "Ver explicación del tema" — solo lectura, pasa pregunta por pregunta con su explicación.
 function pintarPresentacion() {
@@ -624,7 +699,19 @@ function pintarPresentacion() {
 
 function abrirPresentacion(paraEstudiar) {
   const mazo = app.obtenerMazo(mazoActual);
-  if (mazo.tarjetas.length === 0) { mostrarMensaje($('msg-tarjeta'), 'Este mazo no tiene tarjetas que explicar.', true); return; }
+  if (mazo.tarjetas.length === 0) {
+    $('seccion-estudio').hidden = true;
+    mostrarMensaje($('aviso-vacio'), 'Este mazo no tiene tarjetas que explicar.', true);
+    $('aviso-vacio').hidden = false;
+    return;
+  }
+  if (avanceAuto && sesion && !sesion.esUltima()) {
+    sesion.siguiente();
+    limpiarComprobacion();
+    pintarTarjetaEstudio();
+  }
+  $('aviso-vacio').hidden = true;
+  $('btn-empezar-neutral').hidden = true;
   tarjetasPresentacion = mazo.tarjetas;
   indicePresentacion = 0;
   cancelarTemporizador();
@@ -632,15 +719,13 @@ function abrirPresentacion(paraEstudiar) {
   $('btn-empezar-preguntas').hidden = !paraEstudiar;
   $('seccion-presentacion').hidden = false;
   pintarPresentacion();
-  desplazarA($('seccion-presentacion'));
+  (paraEstudiar ? $('btn-empezar-preguntas') : $('btn-siguiente-presentacion')).focus();
 }
 
 $('btn-ver-explicacion').onclick = () => abrirPresentacion(false);
 
-$('btn-empezar-preguntas').onclick = () => {
-  $('seccion-presentacion').hidden = true;
-  empezarEstudio();
-};
+$('btn-empezar-preguntas').onclick = empezarEstudio;
+$('btn-empezar-neutral').onclick = empezarEstudio;
 
 $('btn-anterior-presentacion').onclick = () => {
   if (indicePresentacion > 0) { indicePresentacion -= 1; pintarPresentacion(); }
@@ -648,7 +733,21 @@ $('btn-anterior-presentacion').onclick = () => {
 $('btn-siguiente-presentacion').onclick = () => {
   if (indicePresentacion < tarjetasPresentacion.length - 1) { indicePresentacion += 1; pintarPresentacion(); }
 };
-$('btn-cerrar-presentacion').onclick = () => { $('seccion-presentacion').hidden = true; };
+$('btn-cerrar-presentacion').onclick = () => {
+  if (!sesion) {
+    if (!$('btn-empezar-preguntas').hidden) { salirAPrincipal(); return; }
+    $('seccion-presentacion').hidden = true;
+    mostrarMensaje($('aviso-vacio'), 'Pulsa ▶ Empezar para estudiar.', false);
+    $('aviso-vacio').hidden = false;
+    $('btn-empezar-neutral').hidden = false;
+    $('btn-empezar-neutral').focus();
+    return;
+  }
+  $('seccion-presentacion').hidden = true;
+  $('seccion-estudio').hidden = false;
+  iniciarTemporizadorSiAplica();
+  $('respuesta-usuario').focus();
+};
 
 $('btn-repasar-errores').onclick = () => {
   const mazo = app.obtenerMazo(mazoActual);
@@ -694,8 +793,10 @@ $('form-comprobar').onsubmit = (e) => {
 
   if (correcto) {
     mostrarMensaje($('msg-comprobar'), '¡Correcto! ✓', false);
-    setTimeout(() => {
-      if (sesion.esUltima()) return;
+    const sesionAgendada = sesion;
+    avanceAuto = setTimeout(() => {
+      avanceAuto = null;
+      if (sesion !== sesionAgendada || sesion.esUltima()) return;
       sesion.siguiente();
       limpiarComprobacion();
       pintarTarjetaEstudio();
