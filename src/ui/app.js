@@ -705,6 +705,12 @@ $('btn-exportar-todos').onclick = () => {
   mostrarMensaje($('msg-exportar'), `${mazos.length} mazo(s) exportado(s) en un solo archivo.`, false);
 };
 
+function nombreYaExiste(m) {
+  if (!m || typeof m !== 'object' || typeof m.nombre !== 'string' || m.nombre.trim() === '') return false;
+  const clave = normalizarNombre(m.nombre);
+  return app.listarMazos().some((x) => normalizarNombre(x.nombre) === clave);
+}
+
 $('form-importar').onsubmit = (e) => {
   e.preventDefault();
   const input = $('archivo-importar');
@@ -719,15 +725,24 @@ $('form-importar').onsubmit = (e) => {
       // Archivo con varios mazos: cada uno pasa por la misma validación de RF-10/RF-12.
       let importados = 0;
       let fallidos = 0;
+      let repetidos = 0;
       for (const m of datos.mazos) {
+        if (nombreYaExiste(m)) { repetidos += 1; continue; }
         const r = app.importarMazo(JSON.stringify(m));
         if (r.ok) importados += 1; else fallidos += 1;
       }
-      const texto = fallidos > 0
-        ? `Se importaron ${importados} de ${datos.mazos.length} mazo(s). ${fallidos} no se pudieron importar.`
+      let texto = (fallidos + repetidos) > 0
+        ? `Se importaron ${importados} de ${datos.mazos.length} mazo(s).`
         : `Se importaron ${importados} mazo(s) correctamente.`;
+      if (repetidos > 0) texto += ` ${repetidos} se omitieron porque ya tienes un mazo con ese nombre.`;
+      if (fallidos > 0) texto += ` ${fallidos} no se pudieron importar.`;
       mostrarMensaje($('msg-importar'), texto, importados === 0);
       if (importados > 0) { input.value = ''; pintarMazos(); }
+      return;
+    }
+
+    if (nombreYaExiste(datos)) {
+      mostrarMensaje($('msg-importar'), `Ya tienes un mazo llamado "${datos.nombre.trim()}", así que no se importó. Elimínalo o renómbralo desde EDITAR si quieres cargar este.`, true);
       return;
     }
 
