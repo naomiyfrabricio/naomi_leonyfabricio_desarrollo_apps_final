@@ -823,7 +823,7 @@ for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
     pintarTarjetaEstudio();
     $('tarjeta').classList.add(acierto ? 'resultado-acierto' : 'resultado-fallo');
     reproducirSonido(acierto ? 'acierto' : 'fallo');
-    if (acierto) programarAvance(); else $('btn-siguiente').focus();
+    programarAvance();
   };
 }
 
