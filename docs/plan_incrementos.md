@@ -12,7 +12,7 @@
 | Avance real implementado | **100 %** | Los 4 incrementos están implementados, probados y publicados con tag en GitHub. |
 | Incremento 4 | **Cerrado (v0.4.0)** | RF-10 y RF-12 implementados; formato de intercambio decidido: JSON (ver §7). |
 
-Tags en `main`: v0.1.0, v0.2.0, v0.3.0 y v0.4.0; 61 de 61 pruebas pasan.
+Tags en `main`: v0.1.0, v0.2.0, v0.3.0 y v0.4.0; 61 de 61 pruebas de los RF pasan (73 de 73 con las 12 del extra de opciones).
 
 ## 1. Criterios y alcance
 
@@ -25,6 +25,7 @@ Tags en `main`: v0.1.0, v0.2.0, v0.3.0 y v0.4.0; 61 de 61 pruebas pasan.
 - Extra del 2026-11-23 (marcado como extra, fuera de RF-01 a RF-12): sonidos de acierto y fallo más divertidos, sintetizados con Web Audio (`src/extra/sonidos.js`): arpegio ascendente con destello (≈0.4 s) y «wah-wah» descendente cómico (≈0.7 s). Solo toca la interfaz (`src/ui/app.js`); conserva el botón `#btn-sonido` y la clave `flashcards.ui.sonido`.
 - Extra del 2026-11-23 (marcado como extra, fuera de RF-01 a RF-12): agrupación de «Tus mazos» por categoría, plegable; los grupos arrancan siempre cerrados y solo se recuerdan en memoria mientras la página sigue abierta, sin `localStorage` (`src/extra/categorias.js`). Solo toca la interfaz (`src/ui/app.js`, `index.html`); no cambia `src/mazos`, `src/tarjetas`, `src/estudio`, `src/estadisticas`, `src/intercambio` ni `src/almacenamiento`.
 - Cambio de interfaz del 2026-11-23 (rediseño de pantallas; no altera ningún RF ni los datos): la pantalla principal solo muestra los mazos y la zona de subir archivo (crear mazo, exportar todos y cargar ejemplos van en «Más opciones»); el clic en un mazo abre el estudio a pantalla completa; el botón EDITAR abre la gestión de mazo y tarjetas, también a pantalla completa. Todas las funciones de RF-01 a RF-12 y de los extras siguen existiendo; solo cambia dónde se ven. Reemplaza al botón «▶ Estudiar» por mazo y al desplazamiento suave. Solo toca `index.html` y `src/ui/app.js`; no cambia `src/mazos`, `src/tarjetas`, `src/estudio`, `src/estadisticas`, `src/intercambio` ni `src/almacenamiento`.
+- Extra del 2026-11-25 (marcado como extra, fuera de RF-01 a RF-12): «Modo 4 opciones» para preguntas abiertas. Casilla en ⚙ (apagada por defecto, solo en memoria) que muestra 4 respuestas (la correcta y 3 distractores de otras tarjetas del mismo mazo) y se elige con clic o teclas 1-4; requiere al menos 4 respuestas distintas en el mazo. Lógica en `src/extra/opciones.js` con 12 pruebas en `tests/opciones.test.js`; la interfaz toca `index.html` y `src/ui/app.js`. No altera los RF ni los módulos de dominio.
 - Cambio de interfaz del 2026-11-25 (no altera ningún RF ni los datos): los grupos de categoría de «Tus mazos» arrancan siempre cerrados (se quita la persistencia en `localStorage`; solo se recuerdan en memoria los que abres mientras la página sigue abierta); en estudio, «✓ Acerté» registra y avanza sola, «✗ Fallé» también registra y avanza sola, tocar la tarjeta solo muestra la respuesta (sin penalizar; después eliges Acerté o Fallé) y únicamente «No lo sé» cuenta como fallo y bloquea Acerté/Fallé; el orden de las tarjetas al estudiar es siempre aleatorio (se quita la casilla de orden aleatorio); y al terminar se muestra un resumen con aciertos, fallos y porcentaje. Solo toca `index.html` y `src/ui/app.js`; RF-07, RF-08 y RF-09 siguen usando `SesionEstudio` sin cambios.
 
 ## 2. Inventario de requerimientos funcionales
@@ -145,7 +146,7 @@ Los RNF se aplican a los incrementos pertinentes y **no constituyen RF adicional
 | Rama Git | `incremento-4`. |
 | Tag | `v0.4.0`. |
 | Fecha de cierre | 19 nov 2026. |
-| Decisión del equipo | **Reparto aprobado**; formato de intercambio: JSON (decisión registrada en §7). Implementado y probado (61/61 pruebas). |
+| Decisión del equipo | **Reparto aprobado**; formato de intercambio: JSON (decisión registrada en §7). Implementado y probado (61/61 pruebas de los RF). |
 
 **Justificación del agrupamiento:** RF-12 protege la importación definida en RF-10 y ambos se verifican con CA-05 (§§5, 8 y 12).
 
@@ -203,6 +204,7 @@ No marcar como cumplido hasta contar con evidencia:
 | 2026-11-23 | Cambio de interfaz (rediseño de pantallas): pantalla principal solo con mazos y subir archivo, estudio a pantalla completa al abrir un mazo y gestión de mazo y tarjetas tras el botón EDITAR. No altera los RF-01 a RF-12 ni el formato de datos. | Reducir distracciones al estudiar y simplificar la pantalla de inicio; solo cambia `index.html` y `src/ui/app.js`, sin tocar la lógica de mazos, tarjetas, estudio, estadísticas, intercambio ni almacenamiento. | Naomi (solicitud propia) |
 | 2026-11-25 | Cambio de interfaz: grupos de categoría cerrados al entrar; flujo de estudio con «Acerté» automático (registra y avanza sola), «Fallé» que también avanza solo, «No lo sé» como fallo que bloquea Acerté/Fallé, y tocar la tarjeta solo muestra la respuesta sin penalizar (después se elige Acerté o Fallé); orden de estudio siempre aleatorio (se quita la casilla «Orden aleatorio»); y resumen final con aciertos, fallos y porcentaje. No altera los RF-01 a RF-12 ni el formato de datos. | Evitar la lista larga al entrar, hacer el estudio más ágil, no penalizar a quien solo quería ver la respuesta y evitar trampas; solo cambia `index.html` y `src/ui/app.js`, sin tocar la lógica de módulos. | Naomi (solicitud propia) |
 | 2026-11-25 | Cambio de interfaz: se retira por completo el campo para escribir la respuesta y el botón «Comprobar respuesta» (también en repasar errores y estudiar de nuevo). El estudio queda clásico: ver la pregunta, tocar la tarjeta (o Enter/Espacio) para ver la respuesta y elegir «✓ Acerté» o «✗ Fallé»; «No lo sé» y el tiempo agotado cuentan como fallo. No altera los RF-01 a RF-12 ni el formato de datos. | Al comparar texto escrito no se sabe cómo escribió la respuesta la otra persona (por ejemplo «si» frente a «Si»), por ambigüedad de formato; solo cambia `index.html` y `src/ui/app.js`, sin tocar la lógica de módulos. | Naomi (solicitud propia) |
+| 2026-11-25 | Extra: Modo 4 opciones (elegir entre 4 respuestas en vez de tocar la tarjeta), con `src/extra/opciones.js` y `tests/opciones.test.js` (12 pruebas; total 73). Accesibilidad: se quita el `aria-label` fijo de la tarjeta y el mensaje de estudio pasa a `role="status"`. No altera los RF-01 a RF-12 ni el formato de datos. | Practicar preguntas abiertas sin depender de tocar la tarjeta; solo cambia interfaz y un módulo extra. | Naomi (solicitud propia) |
 
 ## 11. Referencias de la especificación
 

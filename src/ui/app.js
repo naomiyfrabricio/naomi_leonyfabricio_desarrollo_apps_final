@@ -10,6 +10,8 @@ import { MAZOS_EJEMPLO } from '../extra/mazosEjemplo.js';
 import { categoriaDe, ORDEN_CATEGORIAS } from '../extra/categorias.js';
 // EXTRA: sonidos de acierto y fallo sintetizados con Web Audio (solo interfaz).
 import { tocarAcierto, tocarFallo } from '../extra/sonidos.js';
+// EXTRA: Modo 4 opciones (solo interfaz; la lógica vive en src/extra/opciones.js).
+import { puedeUsarOpciones, generarOpciones } from '../extra/opciones.js';
 import { normalizarNombre } from '../mazos/gestorMazos.js';
 
 const app = crearControlador(new AlmacenamientoLocal(window.localStorage));
@@ -32,6 +34,84 @@ let avanceAuto = null;
 let segundosRestantes = 0;
 let resumenActivo = false;
 const RETRASO_AVANCE_MS = 400;
+let opcionesTarjeta = null; // {sesion, indice, datos: {opciones, indiceCorrecto} | null, elegida} de la tarjeta en pantalla
+
+/** Opciones de la tarjeta actual (se generan una sola vez por tarjeta); null si el modo no aplica. */
+function opcionesVigentes() {
+  if (!sesion || !$('chk-opciones').checked || $('chk-opciones').disabled) return null;
+  if (!opcionesTarjeta || opcionesTarjeta.sesion !== sesion || opcionesTarjeta.indice !== sesion.indice) {
+    const tarjeta = ordenEstudio[sesion.indice];
+    const datos = tarjeta ? generarOpciones(tarjeta, app.obtenerMazo(mazoActual).tarjetas) : null;
+    opcionesTarjeta = { sesion, indice: sesion.indice, datos, elegida: null };
+  }
+  return opcionesTarjeta.datos ? opcionesTarjeta : null;
+}
+
+function actualizarDisponibilidadOpciones() {
+  const puede = puedeUsarOpciones(app.obtenerMazo(mazoActual).tarjetas);
+  $('chk-opciones').disabled = !puede;
+  if (!puede) $('chk-opciones').checked = false;
+  $('aviso-opciones').hidden = puede;
+}
+
+function pintarOpciones() {
+  const grupo = $('grupo-opciones');
+  const op = opcionesVigentes();
+  grupo.hidden = !op;
+  $('fila-acierto-fallo').hidden = Boolean(op);
+  $('tarjeta').classList.toggle('sin-voltear', Boolean(op));
+  if (op) { $('tarjeta').removeAttribute('role'); $('tarjeta').tabIndex = -1; }
+  else { $('tarjeta').setAttribute('role', 'button'); $('tarjeta').tabIndex = 0; }
+  grupo.innerHTML = '';
+  if (!op) return;
+  $('pista-tarjeta').textContent = 'Elige una opción';
+  const marcada = sesion.marcadas.has(sesion.indice);
+  op.datos.opciones.forEach((texto, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn-opcion';
+    const num = document.createElement('span');
+    num.className = 'opc-num';
+    num.textContent = `${i + 1}.`;
+    const t = document.createElement('span');
+    t.textContent = texto;
+    const marca = document.createElement('span');
+    marca.className = 'opc-marca';
+    if (marcada) {
+      if (i === op.datos.indiceCorrecto) { b.classList.add('correcta'); marca.textContent = '✓'; }
+      else if (i === op.elegida) { b.classList.add('incorrecta'); marca.textContent = '✗'; }
+    }
+    b.append(num, t, marca);
+    b.disabled = marcada;
+    b.onclick = () => elegirOpcion(i);
+    grupo.appendChild(b);
+  });
+}
+
+function elegirOpcion(i) {
+  const op = opcionesVigentes();
+  if (!op || sesion.marcadas.has(sesion.indice)) return;
+  cancelarTemporizador();
+  const v = sesion.revelar();
+  const acierto = i === op.datos.indiceCorrecto;
+  const r = app.marcar(mazoActual, sesion, acierto);
+  if (!r.ok) return;
+  op.elegida = i;
+  if (acierto) sesionAciertos += 1; else { sesionFallos += 1; erroresSesion.push(idTarjetaActual()); }
+  registrarEstudioDeHoy();
+  refrescar();
+  pintarTarjetaEstudio();
+  $('tarjeta').classList.add(acierto ? 'resultado-acierto' : 'resultado-fallo');
+  reproducirSonido(acierto ? 'acierto' : 'fallo');
+  if (acierto) { mostrarMensaje($('msg-estudio'), '¡Correcto!', false); programarAvance(); return; }
+  mostrarMensaje($('msg-estudio'), `La respuesta era: ${v.respuesta}`, true);
+  $('btn-siguiente').focus();
+}
+
+function enfocarInicioTarjeta() {
+  const primera = opcionesVigentes() && $('grupo-opciones').querySelector('button:not(:disabled)');
+  (primera || $('tarjeta')).focus();
+}
 
 // Preferencia de tema claro/oscuro (solo UI, separado de los datos de mazos — RNF-09).
 const CLAVE_TEMA = 'flashcards.ui.tema';
@@ -353,6 +433,7 @@ function abrirPantallaEstudio(id) {
   $('nuevo-nombre').value = m.nombre;
   $('panel-opciones-estudio').hidden = true;
   $('btn-opciones-estudio').setAttribute('aria-expanded', 'false');
+  actualizarDisponibilidadOpciones();
   $('msg-tarjeta').textContent = '';
   cancelarEdicion();
   pintarTitulosMazo();
@@ -419,7 +500,7 @@ document.addEventListener('keydown', (e) => {
   if (!$('pantalla-estudio').hidden || !$('pantalla-editar').hidden) salirAPrincipal();
 });
 // Cambiar una opción de estudio reinicia la sesión con las opciones nuevas.
-for (const id of ['chk-examen', 'examen-segundos']) {
+for (const id of ['chk-examen', 'examen-segundos', 'chk-opciones']) {
   $(id).onchange = () => {
     if (sesion && !$('pantalla-estudio').hidden && $('seccion-presentacion').hidden) empezarEstudio();
   };
@@ -467,7 +548,7 @@ function avanzarOResumen() {
   limpiarMensaje();
   pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
-  $('tarjeta').focus();
+  enfocarInicioTarjeta();
 }
 
 /** Avance automático cancelable (cancelarTemporizador lo limpia) y atado a la sesión que lo agendó. */
@@ -537,10 +618,12 @@ function pintarTarjetaEstudio() {
   $('respuesta').textContent = v.respuesta ?? '';
   $('barra-progreso-relleno').style.width = `${(v.posicion / v.total) * 100}%`;
   $('btn-acierto').disabled = $('btn-fallo').disabled = v.respuesta === null || sesion.marcadas.has(sesion.indice);
+  $('pista-tarjeta').textContent = 'Toca la tarjeta para ver la respuesta';
   $('pista-tarjeta').hidden = v.respuesta !== null;
   $('btn-siguiente').disabled = !sesion.marcadas.has(sesion.indice);
   $('btn-revelar').disabled = sesion.marcadas.has(sesion.indice) || v.respuesta !== null;
   $('tarjeta').classList.remove('resultado-acierto', 'resultado-fallo');
+  pintarOpciones();
 }
 
 function limpiarMensaje() {
@@ -564,7 +647,7 @@ function iniciarSesionSobre(tarjetas) {
   limpiarMensaje();
   pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
-  $('tarjeta').focus();
+  enfocarInicioTarjeta();
   return r;
 }
 
@@ -682,6 +765,7 @@ $('form-tarjeta').onsubmit = (e) => {
 };
 
 function empezarEstudio() {
+  actualizarDisponibilidadOpciones();
   const mazo = app.obtenerMazo(mazoActual);
   const tarjetas = barajar(mazo.tarjetas);
   const r = iniciarSesionSobre(tarjetas);
@@ -774,8 +858,9 @@ $('btn-cerrar-presentacion').onclick = () => {
   $('seccion-presentacion').hidden = true;
   if (resumenActivo) { mostrarResumen(); return; }
   $('seccion-estudio').hidden = false;
+  pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
-  $('tarjeta').focus();
+  enfocarInicioTarjeta();
 };
 
 $('btn-estudiar-de-nuevo').onclick = empezarEstudio;
@@ -791,7 +876,7 @@ $('btn-revelar').onclick = () => {
   registrarFalloRevelado((resp) => `La respuesta era: ${resp}. Contó como fallo.`);
 };
 function voltearTarjeta() {
-  if (!sesion || sesion.respuestaVisible) return;
+  if (!sesion || sesion.respuestaVisible || opcionesVigentes()) return;
   sesion.revelar();
   pintarTarjetaEstudio();
 }
@@ -801,6 +886,17 @@ $('tarjeta').onkeydown = (e) => {
   e.preventDefault();
   voltearTarjeta();
 };
+// EXTRA: teclas 1-4 eligen la opción, salvo que el foco esté en un campo de texto o select.
+document.addEventListener('keydown', (e) => {
+  if (!/^[1-4]$/.test(e.key) || e.ctrlKey || e.altKey || e.metaKey || e.defaultPrevented) return;
+  if ($('pantalla-estudio').hidden || $('seccion-estudio').hidden || !sesion) return;
+  const t = e.target;
+  if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return;
+  const op = opcionesVigentes();
+  if (!op || sesion.marcadas.has(sesion.indice)) return;
+  e.preventDefault();
+  elegirOpcion(Number(e.key) - 1);
+});
 $('btn-siguiente').onclick = () => {
   if (!sesion || !sesion.marcadas.has(sesion.indice)) return;
   cancelarTemporizador();

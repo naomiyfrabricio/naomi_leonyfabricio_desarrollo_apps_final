@@ -246,6 +246,23 @@
       #respuesta:not(:empty), #tarjeta.resultado-acierto, #tarjeta.resultado-fallo { animation: none; }
     }
 
+    /* Modo 4 opciones (extra, src/extra/opciones.js) */
+    #grupo-opciones { display: grid; gap: 8px; margin-top: 12px; }
+    .btn-opcion {
+      display: flex; align-items: flex-start; gap: 8px; width: 100%; min-height: 48px; text-align: left;
+      white-space: normal; overflow-wrap: anywhere; border-radius: 14px; border-width: 2px;
+      background: var(--superficie); color: var(--texto); border-color: var(--azul);
+    }
+    .btn-opcion .opc-num { flex: none; color: var(--texto-suave); font-weight: 700; }
+    .btn-opcion .opc-marca { flex: none; font-weight: 800; }
+    .btn-opcion .opc-marca:empty { display: none; }
+    .btn-opcion:disabled { background: var(--superficie); color: var(--texto); border-color: var(--borde); opacity: .7; }
+    .btn-opcion.correcta:disabled { background: color-mix(in srgb, var(--verde) 22%, var(--superficie)); border-color: var(--verde); opacity: 1; }
+    .btn-opcion.incorrecta:disabled { background: color-mix(in srgb, var(--rojo) 22%, var(--superficie)); border-color: var(--rojo); opacity: 1; }
+    #tarjeta.sin-voltear { cursor: default; }
+    #tarjeta.sin-voltear:hover { box-shadow: none; }
+    #aviso-opciones { display: block; margin: -4px 0 8px; }
+
     .resumen-final { text-align: center; background: var(--superficie); border: 2px solid var(--azul); border-radius: var(--radio); box-shadow: var(--sombra); padding: 28px 20px; }
     .resumen-final h2 { justify-content: center; font-size: 1.4rem; margin: 0 0 12px; }
     .resumen-cifra { font-size: 2rem; font-weight: 800; margin: 4px 0; }
@@ -375,6 +392,8 @@
           <input type="checkbox" id="chk-examen"> ⏱ Modo examen, con
           <input type="number" id="examen-segundos" value="20" min="5" max="300" style="width: 70px; display: inline-block;" aria-label="Segundos por tarjeta"> segundos por tarjeta
         </label>
+        <label class="opcion-estudio"><input type="checkbox" id="chk-opciones"> 🔢 Modo 4 opciones</label>
+        <small id="aviso-opciones" class="subtitulo" hidden>Necesita al menos 4 tarjetas con respuestas distintas.</small>
         <label class="opcion-estudio"><input type="checkbox" id="chk-explicacion-previa" checked> 📖 Ver la explicación antes de empezar</label>
         <button id="btn-ver-explicacion" type="button" class="secundario">📖 Ver explicación del tema</button>
       </div>
@@ -387,14 +406,15 @@
         <p id="posicion"></p>
         <div class="barra-progreso"><div id="barra-progreso-relleno"></div></div>
         <p id="temporizador-estudio"></p>
-        <div id="tarjeta" tabindex="0" role="button" aria-label="Tarjeta: toca para ver la respuesta"><div id="pregunta"></div><div id="pista-tarjeta">Toca la tarjeta para ver la respuesta</div><div id="respuesta"></div></div>
-        <p id="msg-estudio" class="mensaje" style="text-align: center;"></p>
+        <div id="tarjeta" tabindex="0" role="button" aria-describedby="pista-tarjeta"><div id="pregunta"></div><div id="pista-tarjeta">Toca la tarjeta para ver la respuesta</div><div id="respuesta"></div></div>
+        <div id="grupo-opciones" role="group" aria-label="Opciones de respuesta" hidden></div>
+        <p id="msg-estudio" class="mensaje" role="status" aria-live="polite" style="text-align: center;"></p>
 
         <div class="fila" style="margin-top: 8px;">
           <button id="btn-revelar" type="button" class="secundario">No lo sé, mostrar respuesta</button>
           <button id="btn-siguiente" type="button" class="secundario">Siguiente</button>
         </div>
-        <div class="fila" style="margin-top: 8px;">
+        <div id="fila-acierto-fallo" class="fila" style="margin-top: 8px;">
           <button id="btn-acierto" type="button">✓ Acerté</button>
           <button id="btn-fallo" type="button" class="peligro">✗ Fallé</button>
         </div>
