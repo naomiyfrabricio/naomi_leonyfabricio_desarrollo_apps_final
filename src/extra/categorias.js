@@ -23,6 +23,7 @@ const CATEGORIA_POR_MAZO = new Map(Object.entries({
   'Álgebra': 'Álgebra y trigonometría',
   'Factorización': 'Álgebra y trigonometría',
   'Trigonometría': 'Álgebra y trigonometría',
+  'Álgebra lineal': 'Álgebra y trigonometría',
   'Cálculo 1': 'Cálculo',
   'Cálculo 2': 'Cálculo',
   'Cálculo Vectorial': 'Cálculo',
@@ -37,6 +38,7 @@ const CATEGORIA_POR_MAZO = new Map(Object.entries({
   'Electrónica Digital': 'Electrónica',
   'Estructuras de Datos': 'Computación y bases de datos',
   'SQL y Bases de Datos': 'Computación y bases de datos',
+  'Programación en Python': 'Computación y bases de datos',
   'Ciberseguridad': 'Ciberseguridad',
 }).map(([nombre, categoria]) => [normalizarNombre(nombre), categoria]));
 

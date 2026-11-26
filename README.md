@@ -24,7 +24,7 @@ src/intercambio/intercambioMazos.js      # exportar/importar mazo por archivo JS
 src/almacenamiento/                      # memoria y localStorage, misma interfaz (RNF-05, RNF-09)
 src/ui/controlador.js, src/ui/app.js     # integración y DOM
 src/extra/explicaciones.js               # explicaciones del tema (EXTRA, fuera de RF)
-src/extra/mazosEjemplo.js                # 18 mazos de ejemplo para cargar con un clic (EXTRA, fuera de RF)
+src/extra/mazosEjemplo.js                # 20 mazos de ejemplo para cargar con un clic (EXTRA, fuera de RF)
 src/extra/categorias.js                  # categoría de cada mazo para agrupar "Tus mazos" (EXTRA, fuera de RF)
 src/extra/sonidos.js                     # sonidos sintetizados de acierto y fallo con Web Audio (EXTRA, fuera de RF)
 src/extra/opciones.js                    # Modo 4 opciones: genera la respuesta correcta y 3 distractores (EXTRA, fuera de RF)
@@ -57,7 +57,7 @@ La app tiene tres pantallas: la **principal**, la de **estudio** (pantalla compl
 8. **Subir un archivo:** en **Subir un archivo** elige un `.json` (uno o varios mazos, por ejemplo exportado antes) y pulsa **Importar mazo(s) desde archivo**. Cada mazo se valida por separado y se informa cuántos se importaron; si el archivo está corrupto o mal formado se muestra un error y no se modifica ningún mazo existente. Si el mazo del archivo tiene el mismo nombre que uno que ya tienes, se muestra un mensaje específico con ese nombre (elimínalo o renómbralo desde EDITAR) y, en archivos con varios mazos, el resumen indica cuántos se omitieron por ya existir.
 9. **Crear un mazo vacío:** abre **Más opciones**, escribe el nombre en **Crear un mazo** y pulsa **Crear mazo**. El nombre no puede estar vacío ni repetir uno ya existente. Después ábrelo y pulsa **EDITAR** para agregarle tarjetas.
 10. **Exportar todos los mazos:** en **Más opciones**, **⇩ Exportar todos mis mazos** descarga un solo archivo con todos tus mazos.
-11. **Cargar mazos de ejemplo:** **📚 Cargar mazos de ejemplo** está visible cuando no tienes mazos y, cuando ya tienes, dentro de **Más opciones**. Añade 18 mazos de Cálculo, Matemáticas, Electrónica, Ciberseguridad y SQL; los que ya existan con el mismo nombre se omiten y el mensaje indica cuántos se cargaron y cuántos se omitieron.
+11. **Cargar mazos de ejemplo:** **📚 Cargar mazos de ejemplo** está visible cuando no tienes mazos y, cuando ya tienes, dentro de **Más opciones**. Añade 20 mazos de Cálculo, Matemáticas, Álgebra lineal, Electrónica, Programación en Python, Ciberseguridad y SQL; los que ya existan con el mismo nombre se omiten y el mensaje indica cuántos se cargaron y cuántos se omitieron.
 12. **Buscar, ordenar y grupos:** el buscador ignora mayúsculas y acentos; el orden (nombre, avance, tarjetas) se aplica dentro de cada grupo. Al entrar, todos los grupos aparecen cerrados (con su "N mazo(s)"); pulsa un encabezado para abrirlo o cerrarlo (mientras la página siga abierta se recuerdan los que abriste, al recargar vuelven a cerrarse). Los mazos que creas tú van en **Otros**, al final. Al buscar, los grupos con resultados se abren solos.
 13. **Sonido:** suenan un arpegio alegre al acertar y un wah-wah cómico al fallar (incluido **No lo sé**) y al agotarse el tiempo del modo examen; **🔊** los silencia.
 
@@ -75,7 +75,7 @@ Mejoras de interfaz añadidas después de los RF-01 a RF-12. No cuentan para la 
 - Sonidos de acierto (arpegio alegre) y fallo (wah-wah descendente) sintetizados con Web Audio, sin archivos de audio, silenciables (`src/extra/sonidos.js`), y racha de días estudiando.
 - Modo 4 opciones para preguntas abiertas: elegir entre 4 respuestas con clic o teclas 1-4 (`src/extra/opciones.js`, pruebas en `tests/opciones.test.js`).
 - Rediseño de pantallas (2026-11-23, solo interfaz): principal limpia con los mazos y subir archivo; clic en un mazo abre el estudio a pantalla completa; **EDITAR** abre la gestión de mazo y tarjetas. Reemplaza al botón **▶ Estudiar** por mazo.
-- Carga de 18 mazos de ejemplo con un clic, validados con el importador y sin duplicar nombres (`src/extra/mazosEjemplo.js`).
+- Carga de 20 mazos de ejemplo con un clic, validados con el importador y sin duplicar nombres (`src/extra/mazosEjemplo.js`). Los más recientes son «Álgebra lineal» y «Programación en Python» (14 tarjetas cada uno, con explicaciones).
 - Tras añadir una tarjeta, el foco vuelve a Pregunta y los campos se limpian.
 - Agrupación de "Tus mazos" por categoría, plegable; arranca siempre cerrada y se recuerda solo mientras la página está abierta, sin localStorage (`src/extra/categorias.js`).
 

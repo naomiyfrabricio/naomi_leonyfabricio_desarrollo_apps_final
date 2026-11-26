@@ -734,8 +734,8 @@ $('form-importar').onsubmit = (e) => {
       let texto = (fallidos + repetidos) > 0
         ? `Se importaron ${importados} de ${datos.mazos.length} mazo(s).`
         : `Se importaron ${importados} mazo(s) correctamente.`;
-      if (repetidos > 0) texto += ` ${repetidos} se omitieron porque ya tienes un mazo con ese nombre.`;
-      if (fallidos > 0) texto += ` ${fallidos} no se pudieron importar.`;
+      if (repetidos > 0) texto += repetidos === 1 ? " 1 se omitió porque ya tienes un mazo con ese nombre." : ` ${repetidos} se omitieron porque ya tienes un mazo con ese nombre.`;
+      if (fallidos > 0) texto += fallidos === 1 ? " 1 no se pudo importar." : ` ${fallidos} no se pudieron importar.`;
       mostrarMensaje($('msg-importar'), texto, importados === 0);
       if (importados > 0) { input.value = ''; pintarMazos(); }
       return;
