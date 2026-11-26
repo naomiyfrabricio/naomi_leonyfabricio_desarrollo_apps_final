@@ -14,6 +14,7 @@ export const ORDEN_CATEGORIAS = [
   'Estadística y probabilidad',
   'Electrónica',
   'Computación y bases de datos',
+  'Química',
   'Ciberseguridad',
   CATEGORIA_OTROS,
 ];
@@ -40,6 +41,7 @@ const CATEGORIA_POR_MAZO = new Map(Object.entries({
   'SQL y Bases de Datos': 'Computación y bases de datos',
   'Programación en Python': 'Computación y bases de datos',
   'Ciberseguridad': 'Ciberseguridad',
+  "Química · Quiz opción múltiple": 'Química',
 }).map(([nombre, categoria]) => [normalizarNombre(nombre), categoria]));
 
 /**

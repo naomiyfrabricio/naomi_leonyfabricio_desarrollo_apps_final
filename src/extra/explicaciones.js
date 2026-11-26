@@ -289,6 +289,28 @@ export const EXPLICACIONES = {
     "n = 5; f'n={n}'": "Una f-string inserta el valor de las variables escritas entre llaves. Lleva una f antes de las comillas.",
     "[1, 2, 3][3]": "Una lista de 3 elementos tiene índices 0, 1 y 2, así que el 3 no existe. El último elemento se obtiene con l[len(l)-1] o l[-1].",
   },
+  "Química · Quiz opción múltiple": {
+    "Número de protones que tiene un átomo": "El número atómico es la cantidad de protones del núcleo y es lo que define de qué elemento es el átomo.",
+    "Partícula subatómica con carga negativa": "El electrón es la partícula con carga negativa y se mueve alrededor del núcleo.",
+    "Partícula del núcleo sin carga eléctrica": "El neutrón está en el núcleo y no tiene carga eléctrica; aporta masa al átomo.",
+    "Partícula del núcleo con carga positiva": "El protón está en el núcleo y tiene carga positiva; su cantidad es el número atómico.",
+    "Enlace en el que los átomos comparten electrones": "En el enlace covalente los átomos comparten electrones, algo típico entre no metales.",
+    "Enlace en el que un átomo transfiere electrones a otro": "En el enlace iónico un átomo transfiere electrones a otro y se forman iones de carga opuesta que se atraen.",
+    "Átomos del mismo elemento con distinta masa": "Los isótopos tienen el mismo número atómico (mismos protones) pero distinto número de masa, porque cambia la cantidad de neutrones.",
+    "Escala que mide qué tan ácida o básica es una disolución": "El pH mide qué tan ácida o básica es una disolución, en una escala de 0 a 14.",
+    "Sustancia con pH menor que 7": "Una sustancia con pH menor que 7 es ácida; el 7 es neutro.",
+    "Sustancia con pH mayor que 7": "Una sustancia con pH mayor que 7 es una base (alcalina).",
+    "Reacción entre un ácido y una base que forma sal y agua": "En la neutralización un ácido reacciona con una base y se forman una sal y agua.",
+    "6.022 × 10²³ partículas en un mol": "Un mol contiene 6.022 × 10²³ partículas; ese valor es el número de Avogadro.",
+    "Cambio de estado de sólido a gas sin pasar por líquido": "La sublimación es el paso directo de sólido a gas sin pasar por el estado líquido, como el hielo seco.",
+    "Cambio de estado de gas a líquido": "La condensación es el cambio de estado de gas a líquido, como el vapor de agua que se vuelve gotas.",
+    "Gas noble que se usa para inflar globos": "El helio es un gas noble, menos denso que el aire y no inflamable, por eso se usa para inflar globos.",
+    "Elemento más abundante del universo": "El hidrógeno es el elemento más abundante del universo.",
+    "Elemento con símbolo Fe": "Fe es el símbolo del hierro, que viene del latín ferrum.",
+    "Elemento con símbolo Au": "Au es el símbolo del oro, que viene del latín aurum.",
+    "Elemento con símbolo Na": "Na es el símbolo del sodio, que viene del latín natrium.",
+    "Elemento con símbolo K": "K es el símbolo del potasio, que viene del latín kalium.",
+  },
 };
 
 /** Busca la explicación de una tarjeta; da un mensaje genérico si no existe. */
