@@ -464,10 +464,10 @@ function ocultarResumen() {
 function avanzarOResumen() {
   if (sesion.esUltima()) { mostrarResumen(); return; }
   sesion.siguiente();
-  limpiarComprobacion();
+  limpiarMensaje();
   pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
-  $('respuesta-usuario').focus();
+  $('tarjeta').focus();
 }
 
 /** Avance automático cancelable (cancelarTemporizador lo limpia) y atado a la sesión que lo agendó. */
@@ -478,13 +478,6 @@ function programarAvance() {
     if (!sesion || sesion !== sesionAgendada) return;
     avanzarOResumen();
   }, RETRASO_AVANCE_MS);
-}
-
-/** Compara respuestas de forma flexible: ignora mayúsculas, acentos y espacios. */
-function normalizarRespuesta(texto) {
-  return (texto || '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase().replace(/\s+/g, '');
 }
 
 /** id de la tarjeta que se está mostrando ahora mismo, según el orden usado en esta sesión. */
@@ -529,7 +522,7 @@ function registrarFalloRevelado(textoMensaje) {
   pintarTarjetaEstudio();
   $('tarjeta').classList.add('resultado-fallo');
   reproducirSonido('fallo');
-  mostrarMensaje($('msg-comprobar'), textoMensaje(v.respuesta), true);
+  mostrarMensaje($('msg-estudio'), textoMensaje(v.respuesta), true);
   $('btn-siguiente').focus();
 }
 
@@ -543,18 +536,15 @@ function pintarTarjetaEstudio() {
   $('pregunta').textContent = v.pregunta;
   $('respuesta').textContent = v.respuesta ?? '';
   $('barra-progreso-relleno').style.width = `${(v.posicion / v.total) * 100}%`;
-  $('btn-acierto').disabled = $('btn-fallo').disabled = sesion.marcadas.has(sesion.indice);
-  const yaVista = v.respuesta !== null || sesion.marcadas.has(sesion.indice);
-  $('btn-comprobar').disabled = yaVista;
-  $('respuesta-usuario').disabled = yaVista;
+  $('btn-acierto').disabled = $('btn-fallo').disabled = v.respuesta === null || sesion.marcadas.has(sesion.indice);
+  $('pista-tarjeta').hidden = v.respuesta !== null;
   $('btn-siguiente').disabled = !sesion.marcadas.has(sesion.indice);
   $('btn-revelar').disabled = sesion.marcadas.has(sesion.indice) || v.respuesta !== null;
   $('tarjeta').classList.remove('resultado-acierto', 'resultado-fallo');
 }
 
-function limpiarComprobacion() {
-  $('respuesta-usuario').value = '';
-  $('msg-comprobar').textContent = '';
+function limpiarMensaje() {
+  $('msg-estudio').textContent = '';
 }
 
 /** Arranca una sesión de estudio sobre `tarjetas` (ya ordenadas) y reinicia los contadores de la sesión. */
@@ -571,10 +561,10 @@ function iniciarSesionSobre(tarjetas) {
   $('seccion-presentacion').hidden = true;
   ocultarResumen();
   $('seccion-estudio').hidden = false;
-  limpiarComprobacion();
+  limpiarMensaje();
   pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
-  $('respuesta-usuario').focus();
+  $('tarjeta').focus();
   return r;
 }
 
@@ -743,7 +733,7 @@ function abrirPresentacion(paraEstudiar) {
       resumenActivo = true;
     } else {
       sesion.siguiente();
-      limpiarComprobacion();
+      limpiarMensaje();
       pintarTarjetaEstudio();
     }
   }
@@ -785,7 +775,7 @@ $('btn-cerrar-presentacion').onclick = () => {
   if (resumenActivo) { mostrarResumen(); return; }
   $('seccion-estudio').hidden = false;
   iniciarTemporizadorSiAplica();
-  $('respuesta-usuario').focus();
+  $('tarjeta').focus();
 };
 
 $('btn-estudiar-de-nuevo').onclick = empezarEstudio;
@@ -800,10 +790,16 @@ $('btn-revelar').onclick = () => {
   if (!sesion || sesion.respuestaVisible) return;
   registrarFalloRevelado((resp) => `La respuesta era: ${resp}. Contó como fallo.`);
 };
-$('tarjeta').onclick = () => {
+function voltearTarjeta() {
   if (!sesion || sesion.respuestaVisible) return;
   sesion.revelar();
   pintarTarjetaEstudio();
+}
+$('tarjeta').onclick = voltearTarjeta;
+$('tarjeta').onkeydown = (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  voltearTarjeta();
 };
 $('btn-siguiente').onclick = () => {
   if (!sesion || !sesion.marcadas.has(sesion.indice)) return;
@@ -812,9 +808,8 @@ $('btn-siguiente').onclick = () => {
 };
 for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
   $(id).onclick = () => {
-    if (!sesion) return;
+    if (!sesion || !sesion.respuestaVisible) return;
     cancelarTemporizador();
-    sesion.revelar();
     const r = app.marcar(mazoActual, sesion, acierto);
     if (!r.ok) return;
     if (acierto) sesionAciertos += 1; else { sesionFallos += 1; erroresSesion.push(idTarjetaActual()); }
@@ -826,30 +821,6 @@ for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
     programarAvance();
   };
 }
-
-$('form-comprobar').onsubmit = (e) => {
-  e.preventDefault();
-  cancelarTemporizador();
-  const v = sesion.revelar(); // asegura respuestaVisible=true para poder marcar (RF-08)
-  const correcto = normalizarRespuesta($('respuesta-usuario').value) === normalizarRespuesta(v.respuesta);
-  const r = app.marcar(mazoActual, sesion, correcto);
-  if (!r.ok) { mostrarMensaje($('msg-comprobar'), r.error, true); return; }
-
-  if (correcto) sesionAciertos += 1; else { sesionFallos += 1; erroresSesion.push(idTarjetaActual()); }
-  registrarEstudioDeHoy();
-  refrescar();
-  pintarTarjetaEstudio();
-  $('tarjeta').classList.add(correcto ? 'resultado-acierto' : 'resultado-fallo');
-  reproducirSonido(correcto ? 'acierto' : 'fallo');
-
-  if (correcto) {
-    mostrarMensaje($('msg-comprobar'), '¡Correcto! ✓', false);
-    programarAvance();
-  } else {
-    mostrarMensaje($('msg-comprobar'), `✗ Incorrecto. La respuesta correcta es: ${v.respuesta}`, true);
-    $('btn-siguiente').focus();
-  }
-};
 
 $('buscar-mazo').oninput = pintarMazos;
 $('ordenar-mazos').onchange = pintarMazos;

@@ -132,8 +132,7 @@
     button:disabled { background: #c3cbd6; border-color: #c3cbd6; cursor: default; filter: none; transform: none; }
     button.secundario { background: var(--azul-claro); color: var(--azul-oscuro); border-color: var(--azul-claro); }
     button.peligro { background: var(--rojo-claro); color: var(--rojo); border-color: var(--rojo-claro); }
-    #respuesta-usuario:disabled { opacity: 1; color: var(--texto); background: var(--fondo); border-style: dashed; cursor: not-allowed; }
-    #btn-acierto:disabled, #btn-fallo:disabled, #btn-siguiente:disabled, #btn-comprobar:disabled, #btn-revelar:disabled { background: #c3cbd6; border-color: #c3cbd6; color: #1f2933; }
+    #btn-acierto:disabled, #btn-fallo:disabled, #btn-siguiente:disabled, #btn-revelar:disabled { background: #c3cbd6; border-color: #c3cbd6; color: #1f2933; }
     input, select { border-radius: 10px; }
 
     .mensaje { min-height: 1.1em; margin: 2px 0 0; font-size: .9rem; }
@@ -221,6 +220,9 @@
     }
     #tarjeta:hover { box-shadow: 0 4px 14px rgba(47, 90, 168, .18); }
     #pregunta { font-size: 1.1rem; font-weight: 600; }
+    #pista-tarjeta { font-size: .9rem; color: var(--texto-suave); }
+    #pista-tarjeta[hidden] { display: none; }
+    #tarjeta:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
     #respuesta { color: var(--azul-oscuro); font-weight: 600; min-height: 1.3em; }
     #respuesta:not(:empty) { animation: aparecer .25s ease-out; }
     @keyframes aparecer {
@@ -385,13 +387,8 @@
         <p id="posicion"></p>
         <div class="barra-progreso"><div id="barra-progreso-relleno"></div></div>
         <p id="temporizador-estudio"></p>
-        <div id="tarjeta"><div id="pregunta"></div><div id="respuesta"></div></div>
-
-        <form id="form-comprobar" style="margin-top: 12px;">
-          <input id="respuesta-usuario" placeholder="Escribe tu respuesta..." aria-label="Tu respuesta" autocomplete="off">
-          <button type="submit" id="btn-comprobar">Comprobar respuesta</button>
-        </form>
-        <p id="msg-comprobar" class="mensaje"></p>
+        <div id="tarjeta" tabindex="0" role="button" aria-label="Tarjeta: toca para ver la respuesta"><div id="pregunta"></div><div id="pista-tarjeta">Toca la tarjeta para ver la respuesta</div><div id="respuesta"></div></div>
+        <p id="msg-estudio" class="mensaje" style="text-align: center;"></p>
 
         <div class="fila" style="margin-top: 8px;">
           <button id="btn-revelar" type="button" class="secundario">No lo sé, mostrar respuesta</button>
