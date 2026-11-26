@@ -132,6 +132,7 @@
     button:disabled { background: #c3cbd6; border-color: #c3cbd6; cursor: default; filter: none; transform: none; }
     button.secundario { background: var(--azul-claro); color: var(--azul-oscuro); border-color: var(--azul-claro); }
     button.peligro { background: var(--rojo-claro); color: var(--rojo); border-color: var(--rojo-claro); }
+    #btn-acierto:disabled, #btn-fallo:disabled, #btn-siguiente:disabled, #btn-comprobar:disabled, #btn-revelar:disabled { background: #c3cbd6; border-color: #c3cbd6; color: #1f2933; }
     input, select { border-radius: 10px; }
 
     .mensaje { min-height: 1.1em; margin: 2px 0 0; font-size: .9rem; }
@@ -238,10 +239,18 @@
       60% { transform: translateX(-4px); }
       80% { transform: translateX(4px); }
     }
-    #msg-estudio { text-align: center; margin-top: 10px; }
     @media (prefers-reduced-motion: reduce) {
       #respuesta:not(:empty), #tarjeta.resultado-acierto, #tarjeta.resultado-fallo { animation: none; }
     }
+
+    .resumen-final { text-align: center; background: var(--superficie); border: 2px solid var(--azul); border-radius: var(--radio); box-shadow: var(--sombra); padding: 28px 20px; }
+    .resumen-final h2 { justify-content: center; font-size: 1.4rem; margin: 0 0 12px; }
+    .resumen-cifra { font-size: 2rem; font-weight: 800; margin: 4px 0; }
+    .resumen-ok { color: var(--verde); }
+    .resumen-mal { color: var(--rojo); }
+    .resumen-pct { font-size: 1.1rem; font-weight: 600; margin: 10px 0 2px; }
+    .resumen-animo { color: var(--texto-suave); margin: 0 0 16px; }
+    .resumen-botones { display: flex; flex-direction: column; gap: 8px; }
 
     [hidden] { display: none !important; }
     body.sin-scroll { overflow: hidden; }
@@ -392,9 +401,20 @@
           <button id="btn-acierto" type="button">✓ Acerté</button>
           <button id="btn-fallo" type="button" class="peligro">✗ Fallé</button>
         </div>
-        <p id="msg-estudio" class="mensaje ok"></p>
-        <button id="btn-repasar-errores" type="button" class="peligro" style="margin-top: 8px;" hidden>🔁 Repasar mis errores</button>
       </div>
+
+      <section id="resumen-final" class="resumen-final" aria-live="polite" hidden>
+        <h2>¡Terminaste este mazo! 🎓</h2>
+        <p id="resumen-aciertos" class="resumen-cifra resumen-ok"></p>
+        <p id="resumen-fallos" class="resumen-cifra resumen-mal"></p>
+        <p id="resumen-porcentaje" class="resumen-pct"></p>
+        <p id="resumen-animo" class="resumen-animo"></p>
+        <div class="resumen-botones">
+          <button id="btn-repasar-errores" type="button" class="peligro" hidden>🔁 Repasar mis errores</button>
+          <button id="btn-estudiar-de-nuevo" type="button">↻ Estudiar de nuevo</button>
+          <button id="btn-salir-resumen" type="button" class="secundario">✕ Salir</button>
+        </div>
+      </section>
 
       <div id="seccion-presentacion" hidden>
         <h2 style="font-size: 1rem; text-align: center;">📖 Explicación del tema</h2>

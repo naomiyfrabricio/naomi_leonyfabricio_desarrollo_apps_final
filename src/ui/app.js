@@ -30,6 +30,8 @@ let sesionFallos = 0;
 let temporizador = null;
 let avanceAuto = null;
 let segundosRestantes = 0;
+let resumenActivo = false;
+const RETRASO_AVANCE_MS = 400;
 
 // Preferencia de tema claro/oscuro (solo UI, separado de los datos de mazos — RNF-09).
 const CLAVE_TEMA = 'flashcards.ui.tema';
@@ -199,23 +201,8 @@ function mazosFiltradosYOrdenados() {
   return mazos;
 }
 
-// EXTRA: grupos plegados de "Tus mazos" (solo UI). Un fallo de almacenamiento no rompe la lista.
-const CLAVE_GRUPOS_PLEGADOS = 'flashcards.ui.gruposPlegados';
-function gruposPlegados() {
-  try {
-    const guardado = JSON.parse(localStorage.getItem(CLAVE_GRUPOS_PLEGADOS) || '[]');
-    return new Set(Array.isArray(guardado) ? guardado : []);
-  } catch {
-    return new Set();
-  }
-}
-function guardarGruposPlegados(conjunto) {
-  try {
-    localStorage.setItem(CLAVE_GRUPOS_PLEGADOS, JSON.stringify([...conjunto]));
-  } catch {
-    // Sin almacenamiento, los grupos se muestran igual pero no se recuerdan.
-  }
-}
+// EXTRA: grupos de "Tus mazos" (solo UI). Todos arrancan cerrados; solo se recuerdan en memoria los que abre la usuaria.
+const gruposAbiertos = new Set();
 
 function pintarMazos() {
   const lista = $('lista-mazos');
@@ -244,19 +231,16 @@ function pintarMazos() {
     if (!porCategoria.has(categoria)) porCategoria.set(categoria, []);
     porCategoria.get(categoria).push(item);
   }
-  const plegados = gruposPlegados();
   for (const categoria of ORDEN_CATEGORIAS) {
     const items = porCategoria.get(categoria);
     if (!items) continue;
 
     const grupo = document.createElement('details');
     grupo.className = 'grupo-mazos';
-    grupo.open = Boolean(texto) || !plegados.has(categoria);
+    grupo.open = Boolean(texto) || gruposAbiertos.has(categoria);
     grupo.addEventListener('toggle', () => {
       if ($('buscar-mazo').value.trim()) return;
-      const conjunto = gruposPlegados();
-      if (grupo.open) conjunto.delete(categoria); else conjunto.add(categoria);
-      guardarGruposPlegados(conjunto);
+      if (grupo.open) gruposAbiertos.add(categoria); else gruposAbiertos.delete(categoria);
     });
 
     const resumen = document.createElement('summary');
@@ -387,6 +371,7 @@ function salirAPrincipal() {
   $('aviso-vacio').hidden = true;
   $('btn-empezar-neutral').hidden = true;
   cancelarEdicion();
+  ocultarResumen();
   $('pantalla-estudio').hidden = true;
   $('pantalla-editar').hidden = true;
   bloquearFondo(false);
@@ -447,13 +432,52 @@ function cancelarEdicion() {
   $('btn-tarjeta').textContent = 'Añadir tarjeta';
 }
 
-function mensajeFinal() {
+function mensajeAnimo(pct) {
+  if (pct >= 80) return '¡Lo dominas! 🎉';
+  if (pct >= 50) return 'Vas por buen camino 💪';
+  return 'Sigue practicando 📚';
+}
+
+function mostrarResumen() {
+  cancelarTemporizador();
+  resumenActivo = true;
   const total = sesionAciertos + sesionFallos;
   const pct = total > 0 ? Math.round((sesionAciertos / total) * 100) : 0;
-  const resumen = `Repaso terminado: ${sesionAciertos}/${total} correctas (${pct} %).`;
-  if (pct >= 80) return `${resumen} ¡Lo dominas! 🎉`;
-  if (pct >= 50) return `${resumen} Vas por buen camino 💪`;
-  return `${resumen} Sigue practicando 📚`;
+  $('resumen-aciertos').textContent = `Aciertos: ${sesionAciertos}`;
+  $('resumen-fallos').textContent = `Fallos: ${sesionFallos}`;
+  $('resumen-porcentaje').textContent = `${sesionAciertos} de ${total} correctas, ${pct} %`;
+  $('resumen-animo').textContent = mensajeAnimo(pct);
+  $('btn-repasar-errores').hidden = erroresSesion.length === 0;
+  $('btn-repasar-errores').textContent = `🔁 Repasar mis errores (${erroresSesion.length})`;
+  $('seccion-estudio').hidden = true;
+  $('seccion-presentacion').hidden = true;
+  $('resumen-final').hidden = false;
+  $('btn-estudiar-de-nuevo').focus();
+}
+
+function ocultarResumen() {
+  resumenActivo = false;
+  $('resumen-final').hidden = true;
+}
+
+/** Pasa a la tarjeta siguiente o, si era la última, al resumen final. */
+function avanzarOResumen() {
+  if (sesion.esUltima()) { mostrarResumen(); return; }
+  sesion.siguiente();
+  limpiarComprobacion();
+  pintarTarjetaEstudio();
+  iniciarTemporizadorSiAplica();
+  $('respuesta-usuario').focus();
+}
+
+/** Avance automático cancelable (cancelarTemporizador lo limpia) y atado a la sesión que lo agendó. */
+function programarAvance() {
+  const sesionAgendada = sesion;
+  avanceAuto = setTimeout(() => {
+    avanceAuto = null;
+    if (!sesion || sesion !== sesionAgendada) return;
+    avanzarOResumen();
+  }, RETRASO_AVANCE_MS);
 }
 
 /** Compara respuestas de forma flexible: ignora mayúsculas, acentos y espacios. */
@@ -491,10 +515,11 @@ function iniciarTemporizadorSiAplica() {
   }, 1000);
 }
 
-/** Se acabó el tiempo sin que el estudiante respondiera: cuenta como fallo (RF-08). */
-function tiempoAgotado() {
+/** Ver la respuesta sin responder (tiempo agotado, "No lo sé" o tocar la tarjeta) cuenta como fallo (RF-08). */
+function registrarFalloRevelado(textoMensaje) {
+  if (!sesion || sesion.marcadas.has(sesion.indice)) return;
   cancelarTemporizador();
-  const v = sesion.revelar(); // asegura respuestaVisible=true para poder marcar (RF-08)
+  const v = sesion.revelar();
   const r = app.marcar(mazoActual, sesion, false);
   if (!r.ok) return;
   sesionFallos += 1;
@@ -504,7 +529,12 @@ function tiempoAgotado() {
   pintarTarjetaEstudio();
   $('tarjeta').classList.add('resultado-fallo');
   reproducirSonido('fallo');
-  mostrarMensaje($('msg-comprobar'), `⏱ Se acabó el tiempo. La respuesta era: ${v.respuesta}`, true);
+  mostrarMensaje($('msg-comprobar'), textoMensaje(v.respuesta), true);
+  $('btn-siguiente').focus();
+}
+
+function tiempoAgotado() {
+  registrarFalloRevelado((resp) => `⏱ Se acabó el tiempo. La respuesta era: ${resp}`);
 }
 
 function pintarTarjetaEstudio() {
@@ -513,13 +543,11 @@ function pintarTarjetaEstudio() {
   $('pregunta').textContent = v.pregunta;
   $('respuesta').textContent = v.respuesta ?? '';
   $('barra-progreso-relleno').style.width = `${(v.posicion / v.total) * 100}%`;
-  $('btn-acierto').disabled = $('btn-fallo').disabled = !sesion.puedeMarcar();
+  $('btn-acierto').disabled = $('btn-fallo').disabled = sesion.marcadas.has(sesion.indice);
   // "Comprobar" se deshabilita solo cuando la tarjeta ya quedó marcada (revelada y sin poder volver a marcar).
   $('btn-comprobar').disabled = v.respuesta !== null && !sesion.puedeMarcar();
-  $('btn-siguiente').disabled = sesion.esUltima();
-  $('msg-estudio').textContent = sesion.terminado() ? mensajeFinal() : '';
-  $('btn-repasar-errores').hidden = !(sesion.terminado() && erroresSesion.length > 0);
-  $('btn-repasar-errores').textContent = `🔁 Repasar mis errores (${erroresSesion.length})`;
+  $('btn-siguiente').disabled = !sesion.marcadas.has(sesion.indice);
+  $('btn-revelar').disabled = sesion.marcadas.has(sesion.indice);
   $('tarjeta').classList.remove('resultado-acierto', 'resultado-fallo');
 }
 
@@ -540,6 +568,7 @@ function iniciarSesionSobre(tarjetas) {
   $('aviso-vacio').hidden = true;
   $('btn-empezar-neutral').hidden = true;
   $('seccion-presentacion').hidden = true;
+  ocultarResumen();
   $('seccion-estudio').hidden = false;
   limpiarComprobacion();
   pintarTarjetaEstudio();
@@ -670,6 +699,7 @@ function empezarEstudio() {
     cancelarTemporizador();
     $('seccion-presentacion').hidden = true;
     $('seccion-estudio').hidden = true;
+    ocultarResumen();
     $('btn-empezar-neutral').hidden = true;
     mostrarMensaje($('aviso-vacio'), r.error, true);
     $('aviso-vacio').hidden = false;
@@ -705,11 +735,18 @@ function abrirPresentacion(paraEstudiar) {
     $('aviso-vacio').hidden = false;
     return;
   }
-  if (avanceAuto && sesion && !sesion.esUltima()) {
-    sesion.siguiente();
-    limpiarComprobacion();
-    pintarTarjetaEstudio();
+  if (avanceAuto && sesion) {
+    clearTimeout(avanceAuto);
+    avanceAuto = null;
+    if (sesion.esUltima()) {
+      resumenActivo = true;
+    } else {
+      sesion.siguiente();
+      limpiarComprobacion();
+      pintarTarjetaEstudio();
+    }
   }
+  $('resumen-final').hidden = true;
   $('aviso-vacio').hidden = true;
   $('btn-empezar-neutral').hidden = true;
   tarjetasPresentacion = mazo.tarjetas;
@@ -744,27 +781,33 @@ $('btn-cerrar-presentacion').onclick = () => {
     return;
   }
   $('seccion-presentacion').hidden = true;
+  if (resumenActivo) { mostrarResumen(); return; }
   $('seccion-estudio').hidden = false;
   iniciarTemporizadorSiAplica();
   $('respuesta-usuario').focus();
 };
 
+$('btn-estudiar-de-nuevo').onclick = empezarEstudio;
+$('btn-salir-resumen').onclick = salirAPrincipal;
 $('btn-repasar-errores').onclick = () => {
   const mazo = app.obtenerMazo(mazoActual);
   const tarjetasFalladas = mazo.tarjetas.filter((t) => erroresSesion.includes(t.id));
   iniciarSesionSobre(tarjetasFalladas);
 };
 
-$('tarjeta').onclick = $('btn-revelar').onclick = () => { sesion.revelar(); pintarTarjetaEstudio(); };
+$('tarjeta').onclick = $('btn-revelar').onclick = () => {
+  registrarFalloRevelado((resp) => `La respuesta era: ${resp}. Verla antes de responder cuenta como fallo.`);
+};
 $('btn-siguiente').onclick = () => {
-  sesion.siguiente();
-  limpiarComprobacion();
-  pintarTarjetaEstudio();
-  iniciarTemporizadorSiAplica();
+  if (!sesion || !sesion.marcadas.has(sesion.indice)) return;
+  cancelarTemporizador();
+  avanzarOResumen();
 };
 for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
   $(id).onclick = () => {
+    if (!sesion) return;
     cancelarTemporizador();
+    sesion.revelar();
     const r = app.marcar(mazoActual, sesion, acierto);
     if (!r.ok) return;
     if (acierto) sesionAciertos += 1; else { sesionFallos += 1; erroresSesion.push(idTarjetaActual()); }
@@ -773,6 +816,7 @@ for (const [id, acierto] of [['btn-acierto', true], ['btn-fallo', false]]) {
     pintarTarjetaEstudio();
     $('tarjeta').classList.add(acierto ? 'resultado-acierto' : 'resultado-fallo');
     reproducirSonido(acierto ? 'acierto' : 'fallo');
+    if (acierto) programarAvance(); else $('btn-siguiente').focus();
   };
 }
 
@@ -793,17 +837,10 @@ $('form-comprobar').onsubmit = (e) => {
 
   if (correcto) {
     mostrarMensaje($('msg-comprobar'), '¡Correcto! ✓', false);
-    const sesionAgendada = sesion;
-    avanceAuto = setTimeout(() => {
-      avanceAuto = null;
-      if (sesion !== sesionAgendada || sesion.esUltima()) return;
-      sesion.siguiente();
-      limpiarComprobacion();
-      pintarTarjetaEstudio();
-      iniciarTemporizadorSiAplica();
-    }, 900);
+    programarAvance();
   } else {
     mostrarMensaje($('msg-comprobar'), `✗ Incorrecto. La respuesta correcta es: ${v.respuesta}`, true);
+    $('btn-siguiente').focus();
   }
 };
 
