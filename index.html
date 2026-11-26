@@ -132,6 +132,7 @@
     button:disabled { background: #c3cbd6; border-color: #c3cbd6; cursor: default; filter: none; transform: none; }
     button.secundario { background: var(--azul-claro); color: var(--azul-oscuro); border-color: var(--azul-claro); }
     button.peligro { background: var(--rojo-claro); color: var(--rojo); border-color: var(--rojo-claro); }
+    #respuesta-usuario:disabled { opacity: 1; color: var(--texto); background: var(--fondo); border-style: dashed; cursor: not-allowed; }
     #btn-acierto:disabled, #btn-fallo:disabled, #btn-siguiente:disabled, #btn-comprobar:disabled, #btn-revelar:disabled { background: #c3cbd6; border-color: #c3cbd6; color: #1f2933; }
     input, select { border-radius: 10px; }
 
@@ -368,7 +369,6 @@
     </div>
     <div id="panel-opciones-estudio" hidden>
       <div class="caja">
-        <label class="opcion-estudio"><input type="checkbox" id="chk-aleatorio"> 🔀 Orden aleatorio</label>
         <label class="opcion-estudio">
           <input type="checkbox" id="chk-examen"> ⏱ Modo examen, con
           <input type="number" id="examen-segundos" value="20" min="5" max="300" style="width: 70px; display: inline-block;" aria-label="Segundos por tarjeta"> segundos por tarjeta

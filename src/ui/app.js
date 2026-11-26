@@ -419,7 +419,7 @@ document.addEventListener('keydown', (e) => {
   if (!$('pantalla-estudio').hidden || !$('pantalla-editar').hidden) salirAPrincipal();
 });
 // Cambiar una opción de estudio reinicia la sesión con las opciones nuevas.
-for (const id of ['chk-aleatorio', 'chk-examen', 'examen-segundos']) {
+for (const id of ['chk-examen', 'examen-segundos']) {
   $(id).onchange = () => {
     if (sesion && !$('pantalla-estudio').hidden && $('seccion-presentacion').hidden) empezarEstudio();
   };
@@ -515,7 +515,7 @@ function iniciarTemporizadorSiAplica() {
   }, 1000);
 }
 
-/** Ver la respuesta sin responder (tiempo agotado, "No lo sé" o tocar la tarjeta) cuenta como fallo (RF-08). */
+/** Tiempo agotado o "No lo sé" cuentan como fallo (RF-08); tocar la tarjeta solo muestra la respuesta. */
 function registrarFalloRevelado(textoMensaje) {
   if (!sesion || sesion.marcadas.has(sesion.indice)) return;
   cancelarTemporizador();
@@ -544,10 +544,11 @@ function pintarTarjetaEstudio() {
   $('respuesta').textContent = v.respuesta ?? '';
   $('barra-progreso-relleno').style.width = `${(v.posicion / v.total) * 100}%`;
   $('btn-acierto').disabled = $('btn-fallo').disabled = sesion.marcadas.has(sesion.indice);
-  // "Comprobar" se deshabilita solo cuando la tarjeta ya quedó marcada (revelada y sin poder volver a marcar).
-  $('btn-comprobar').disabled = v.respuesta !== null && !sesion.puedeMarcar();
+  const yaVista = v.respuesta !== null || sesion.marcadas.has(sesion.indice);
+  $('btn-comprobar').disabled = yaVista;
+  $('respuesta-usuario').disabled = yaVista;
   $('btn-siguiente').disabled = !sesion.marcadas.has(sesion.indice);
-  $('btn-revelar').disabled = sesion.marcadas.has(sesion.indice);
+  $('btn-revelar').disabled = sesion.marcadas.has(sesion.indice) || v.respuesta !== null;
   $('tarjeta').classList.remove('resultado-acierto', 'resultado-fallo');
 }
 
@@ -692,7 +693,7 @@ $('form-tarjeta').onsubmit = (e) => {
 
 function empezarEstudio() {
   const mazo = app.obtenerMazo(mazoActual);
-  const tarjetas = $('chk-aleatorio').checked ? barajar(mazo.tarjetas) : [...mazo.tarjetas];
+  const tarjetas = barajar(mazo.tarjetas);
   const r = iniciarSesionSobre(tarjetas);
   if (!r.ok) {
     sesion = null;
@@ -792,11 +793,17 @@ $('btn-salir-resumen').onclick = salirAPrincipal;
 $('btn-repasar-errores').onclick = () => {
   const mazo = app.obtenerMazo(mazoActual);
   const tarjetasFalladas = mazo.tarjetas.filter((t) => erroresSesion.includes(t.id));
-  iniciarSesionSobre(tarjetasFalladas);
+  iniciarSesionSobre(barajar(tarjetasFalladas));
 };
 
-$('tarjeta').onclick = $('btn-revelar').onclick = () => {
-  registrarFalloRevelado((resp) => `La respuesta era: ${resp}. Verla antes de responder cuenta como fallo.`);
+$('btn-revelar').onclick = () => {
+  if (!sesion || sesion.respuestaVisible) return;
+  registrarFalloRevelado((resp) => `La respuesta era: ${resp}. Contó como fallo.`);
+};
+$('tarjeta').onclick = () => {
+  if (!sesion || sesion.respuestaVisible) return;
+  sesion.revelar();
+  pintarTarjetaEstudio();
 };
 $('btn-siguiente').onclick = () => {
   if (!sesion || !sesion.marcadas.has(sesion.indice)) return;
