@@ -212,6 +212,9 @@
     .barra-progreso { height: 8px; border-radius: 999px; background: var(--borde); overflow: hidden; margin-bottom: 8px; }
     .barra-progreso > div { height: 100%; width: 0%; background: var(--azul); border-radius: 999px; transition: width .25s ease; }
     #temporizador-estudio { text-align: center; font-weight: 700; color: var(--rojo); min-height: 1.2em; margin: 0 0 8px; }
+    /* Modo quiz con reloj total (extra, src/extra/quiz.js) */
+    #temporizador-estudio.reloj-quiz { color: var(--azul-oscuro); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+    #temporizador-estudio.reloj-quiz.urgente { color: var(--rojo); }
     #tarjeta {
       border: 2px solid var(--azul); border-radius: var(--radio); background: var(--azul-claro);
       padding: 28px 20px; min-height: 140px; cursor: pointer; overflow-wrap: anywhere;
@@ -392,7 +395,11 @@
           <input type="checkbox" id="chk-examen"> ⏱ Modo examen, con
           <input type="number" id="examen-segundos" value="20" min="5" max="300" style="width: 70px; display: inline-block;" aria-label="Segundos por tarjeta"> segundos por tarjeta
         </label>
-        <label class="opcion-estudio"><input type="checkbox" id="chk-opciones"> 🔢 Modo 4 opciones</label>
+        <label class="opcion-estudio"><input type="checkbox" id="chk-opciones"> 🔢 Modo 4 opciones <small id="nota-quiz-opciones" class="subtitulo" hidden>(lo usa el quiz)</small></label>
+        <label class="opcion-estudio">
+          <input type="checkbox" id="chk-quiz"> 🏁 Modo quiz, con
+          <input type="number" id="quiz-segundos" value="120" min="10" max="3600" style="width: 80px; display: inline-block;" aria-label="Segundos en total para el quiz"> segundos en total
+        </label>
         <small id="aviso-opciones" class="subtitulo" hidden>Necesita al menos 4 tarjetas con respuestas distintas.</small>
         <label class="opcion-estudio"><input type="checkbox" id="chk-explicacion-previa" checked> 📖 Ver la explicación antes de empezar</label>
         <button id="btn-ver-explicacion" type="button" class="secundario">📖 Ver explicación del tema</button>
@@ -405,7 +412,7 @@
       <div id="seccion-estudio" hidden>
         <p id="posicion"></p>
         <div class="barra-progreso"><div id="barra-progreso-relleno"></div></div>
-        <p id="temporizador-estudio"></p>
+        <p id="temporizador-estudio" aria-live="off"></p>
         <div id="tarjeta" tabindex="0" role="button" aria-describedby="pista-tarjeta"><div id="pregunta"></div><div id="pista-tarjeta">Toca la tarjeta para ver la respuesta</div><div id="respuesta"></div></div>
         <div id="grupo-opciones" role="group" aria-label="Opciones de respuesta" hidden></div>
         <p id="msg-estudio" class="mensaje" role="status" aria-live="polite" style="text-align: center;"></p>
@@ -421,10 +428,12 @@
       </div>
 
       <section id="resumen-final" class="resumen-final" aria-live="polite" hidden>
-        <h2>¡Terminaste este mazo! 🎓</h2>
+        <h2 id="resumen-titulo">¡Terminaste este mazo! 🎓</h2>
         <p id="resumen-aciertos" class="resumen-cifra resumen-ok"></p>
         <p id="resumen-fallos" class="resumen-cifra resumen-mal"></p>
+        <p id="resumen-sin-responder" class="resumen-pct" hidden></p>
         <p id="resumen-porcentaje" class="resumen-pct"></p>
+        <p id="resumen-tiempo" class="resumen-pct" hidden></p>
         <p id="resumen-animo" class="resumen-animo"></p>
         <div class="resumen-botones">
           <button id="btn-repasar-errores" type="button" class="peligro" hidden>🔁 Repasar mis errores</button>

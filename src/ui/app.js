@@ -12,6 +12,8 @@ import { categoriaDe, ORDEN_CATEGORIAS } from '../extra/categorias.js';
 import { tocarAcierto, tocarFallo } from '../extra/sonidos.js';
 // EXTRA: Modo 4 opciones (solo interfaz; la lógica vive en src/extra/opciones.js).
 import { puedeUsarOpciones, generarOpciones } from '../extra/opciones.js';
+// EXTRA: Modo quiz con reloj total (solo interfaz; la lógica pura vive en src/extra/quiz.js).
+import { elegirPreguntasQuiz, formatearTiempo, resumenQuiz } from '../extra/quiz.js';
 import { normalizarNombre } from '../mazos/gestorMazos.js';
 
 const app = crearControlador(new AlmacenamientoLocal(window.localStorage));
@@ -36,9 +38,52 @@ let resumenActivo = false;
 const RETRASO_AVANCE_MS = 400;
 let opcionesTarjeta = null; // {sesion, indice, datos: {opciones, indiceCorrecto} | null, elegida} de la tarjeta en pantalla
 
+// EXTRA Modo quiz: un solo reloj para todo el quiz. `quiz` pertenece a una sesión concreta (quiz.sesion).
+const RETRASO_QUIZ_MS = 600;
+const PREGUNTAS_QUIZ = 10;
+let quiz = null;            // {sesion, total, segundos, inicioMs, finMs, usado, motivo, aviso10}
+let relojQuiz = null;
+let bloqueoQuiz = false;    // mientras el quiz está activo, 4 opciones queda forzado y el modo examen bloqueado
+let previoOpciones = false;
+let previoExamen = false;
+
+/** Segundos totales del quiz, siempre entre 10 y 3600. */
+function segundosQuiz() {
+  const n = Math.round(Number($('quiz-segundos').value));
+  return Math.min(3600, Math.max(10, Number.isFinite(n) && n > 0 ? n : 120));
+}
+
+/** El quiz de la sesión en pantalla (null si la sesión actual no es un quiz). */
+function quizDeSesion() {
+  return quiz && sesion && quiz.sesion === sesion ? quiz : null;
+}
+
+/** Marca/deshabilita 4 opciones y modo examen mientras el quiz esté activo, y restaura sus estados al apagarlo. */
+function sincronizarBloqueoQuiz() {
+  const encendido = $('chk-quiz').checked;
+  if (encendido && !bloqueoQuiz) {
+    bloqueoQuiz = true;
+    previoOpciones = $('chk-opciones').checked;
+    previoExamen = $('chk-examen').checked;
+    $('chk-opciones').checked = true;
+    $('chk-opciones').disabled = true;
+    $('chk-examen').checked = false;
+    $('chk-examen').disabled = true;
+    $('examen-segundos').disabled = true;
+  } else if (!encendido && bloqueoQuiz) {
+    bloqueoQuiz = false;
+    $('chk-opciones').checked = previoOpciones;
+    $('chk-opciones').disabled = false;
+    $('chk-examen').checked = previoExamen;
+    $('chk-examen').disabled = false;
+    $('examen-segundos').disabled = false;
+  }
+  $('nota-quiz-opciones').hidden = !bloqueoQuiz;
+}
+
 /** Opciones de la tarjeta actual (se generan una sola vez por tarjeta); null si el modo no aplica. */
 function opcionesVigentes() {
-  if (!sesion || !$('chk-opciones').checked || $('chk-opciones').disabled) return null;
+  if (!sesion || !$('chk-opciones').checked || ($('chk-opciones').disabled && !bloqueoQuiz)) return null;
   if (!opcionesTarjeta || opcionesTarjeta.sesion !== sesion || opcionesTarjeta.indice !== sesion.indice) {
     const tarjeta = ordenEstudio[sesion.indice];
     const datos = tarjeta ? generarOpciones(tarjeta, app.obtenerMazo(mazoActual).tarjetas) : null;
@@ -49,8 +94,14 @@ function opcionesVigentes() {
 
 function actualizarDisponibilidadOpciones() {
   const puede = puedeUsarOpciones(app.obtenerMazo(mazoActual).tarjetas);
-  $('chk-opciones').disabled = !puede;
-  if (!puede) $('chk-opciones').checked = false;
+  $('chk-quiz').disabled = !puede;
+  $('quiz-segundos').disabled = !puede;
+  if (!puede) $('chk-quiz').checked = false;
+  sincronizarBloqueoQuiz();
+  if (!bloqueoQuiz) {
+    $('chk-opciones').disabled = !puede;
+    if (!puede) $('chk-opciones').checked = false;
+  }
   $('aviso-opciones').hidden = puede;
 }
 
@@ -59,6 +110,7 @@ function pintarOpciones() {
   const op = opcionesVigentes();
   grupo.hidden = !op;
   $('fila-acierto-fallo').hidden = Boolean(op);
+  $('btn-siguiente').hidden = Boolean(op && quizDeSesion());
   $('tarjeta').classList.toggle('sin-voltear', Boolean(op));
   if (op) { $('tarjeta').removeAttribute('role'); $('tarjeta').tabIndex = -1; }
   else { $('tarjeta').setAttribute('role', 'button'); $('tarjeta').tabIndex = 0; }
@@ -91,7 +143,7 @@ function pintarOpciones() {
 function elegirOpcion(i) {
   const op = opcionesVigentes();
   if (!op || sesion.marcadas.has(sesion.indice)) return;
-  cancelarTemporizador();
+  cancelarTemporizadorTarjeta();
   const v = sesion.revelar();
   const acierto = i === op.datos.indiceCorrecto;
   const r = app.marcar(mazoActual, sesion, acierto);
@@ -103,6 +155,12 @@ function elegirOpcion(i) {
   pintarTarjetaEstudio();
   $('tarjeta').classList.add(acierto ? 'resultado-acierto' : 'resultado-fallo');
   reproducirSonido(acierto ? 'acierto' : 'fallo');
+  if (quizDeSesion()) {
+    mostrarMensaje($('msg-estudio'), acierto ? '¡Correcto!' : `La respuesta era: ${v.respuesta}`, !acierto);
+    if (sesion.esUltima()) detenerRelojQuiz();
+    programarAvance(RETRASO_QUIZ_MS);
+    return;
+  }
   if (acierto) { mostrarMensaje($('msg-estudio'), '¡Correcto!', false); programarAvance(); return; }
   mostrarMensaje($('msg-estudio'), `La respuesta era: ${v.respuesta}`, true);
   $('btn-siguiente').focus();
@@ -500,8 +558,10 @@ document.addEventListener('keydown', (e) => {
   if (!$('pantalla-estudio').hidden || !$('pantalla-editar').hidden) salirAPrincipal();
 });
 // Cambiar una opción de estudio reinicia la sesión con las opciones nuevas.
-for (const id of ['chk-examen', 'examen-segundos', 'chk-opciones']) {
+for (const id of ['chk-examen', 'examen-segundos', 'chk-opciones', 'chk-quiz', 'quiz-segundos']) {
   $(id).onchange = () => {
+    if (id === 'quiz-segundos') $('quiz-segundos').value = String(segundosQuiz());
+    if (id === 'chk-quiz') sincronizarBloqueoQuiz();
     if (sesion && !$('pantalla-estudio').hidden && $('seccion-presentacion').hidden) empezarEstudio();
   };
 }
@@ -526,8 +586,23 @@ function mostrarResumen() {
   const pct = total > 0 ? Math.round((sesionAciertos / total) * 100) : 0;
   $('resumen-aciertos').textContent = `Aciertos: ${sesionAciertos}`;
   $('resumen-fallos').textContent = `Fallos: ${sesionFallos}`;
-  $('resumen-porcentaje').textContent = `${sesionAciertos} de ${total} correctas, ${pct} %`;
-  $('resumen-animo').textContent = mensajeAnimo(pct);
+  const q = quizDeSesion();
+  if (q) {
+    const r = resumenQuiz({ aciertos: sesionAciertos, fallos: sesionFallos, totalPreguntas: q.total });
+    $('resumen-titulo').textContent = q.motivo === 'tiempo' ? '¡Se acabó el tiempo!' : '¡Quiz terminado!';
+    $('resumen-sin-responder').textContent = `Sin responder: ${r.sinResponder}`;
+    $('resumen-sin-responder').hidden = r.sinResponder === 0;
+    $('resumen-porcentaje').textContent = `Puntaje: ${r.puntaje} de ${q.total} (${r.porcentaje} %)`;
+    $('resumen-tiempo').textContent = `Tiempo usado: ${formatearTiempo(q.usado ?? 0)}`;
+    $('resumen-tiempo').hidden = false;
+    $('resumen-animo').textContent = mensajeAnimo(r.porcentaje);
+  } else {
+    $('resumen-titulo').textContent = '¡Terminaste este mazo! 🎓';
+    $('resumen-sin-responder').hidden = true;
+    $('resumen-tiempo').hidden = true;
+    $('resumen-porcentaje').textContent = `${sesionAciertos} de ${total} correctas, ${pct} %`;
+    $('resumen-animo').textContent = mensajeAnimo(pct);
+  }
   $('btn-repasar-errores').hidden = erroresSesion.length === 0;
   $('btn-repasar-errores').textContent = `🔁 Repasar mis errores (${erroresSesion.length})`;
   $('seccion-estudio').hidden = true;
@@ -552,13 +627,13 @@ function avanzarOResumen() {
 }
 
 /** Avance automático cancelable (cancelarTemporizador lo limpia) y atado a la sesión que lo agendó. */
-function programarAvance() {
+function programarAvance(retraso = RETRASO_AVANCE_MS) {
   const sesionAgendada = sesion;
   avanceAuto = setTimeout(() => {
     avanceAuto = null;
     if (!sesion || sesion !== sesionAgendada) return;
     avanzarOResumen();
-  }, RETRASO_AVANCE_MS);
+  }, retraso);
 }
 
 /** id de la tarjeta que se está mostrando ahora mismo, según el orden usado en esta sesión. */
@@ -567,10 +642,66 @@ function idTarjetaActual() {
   return ordenEstudio[v.posicion - 1]?.id;
 }
 
-function cancelarTemporizador() {
+/** Cancela el avance automático y el reloj por tarjeta (modo examen); no toca el reloj total del quiz. */
+function cancelarTemporizadorTarjeta() {
   if (avanceAuto) { clearTimeout(avanceAuto); avanceAuto = null; }
   if (temporizador) { clearInterval(temporizador); temporizador = null; }
+  if (!quizDeSesion()) $('temporizador-estudio').textContent = '';
+}
+
+/** Detiene el reloj total del quiz y deja guardado el tiempo usado (una sola vez). */
+function detenerRelojQuiz() {
+  if (relojQuiz) { clearInterval(relojQuiz); relojQuiz = null; }
+  if (quiz && quiz.usado === null && quiz.inicioMs !== null) {
+    quiz.usado = Math.min(quiz.segundos, Math.round((Date.now() - quiz.inicioMs) / 1000));
+  }
+}
+
+/** Salida común: cancela avance automático, reloj de examen y reloj total del quiz. */
+function cancelarTemporizador() {
+  cancelarTemporizadorTarjeta();
+  detenerRelojQuiz();
   $('temporizador-estudio').textContent = '';
+  $('temporizador-estudio').className = '';
+}
+
+function pintarRelojQuiz(restante) {
+  $('temporizador-estudio').textContent = `⏱ ${formatearTiempo(restante)}`;
+  $('temporizador-estudio').className = restante <= 10 ? 'reloj-quiz urgente' : 'reloj-quiz';
+}
+
+function iniciarRelojQuiz() {
+  const q = quizDeSesion();
+  if (!q || relojQuiz || q.inicioMs !== null) return;
+  q.inicioMs = Date.now();
+  q.finMs = q.inicioMs + q.segundos * 1000;
+  let mostrado = q.segundos;
+  pintarRelojQuiz(mostrado);
+  const sesionDelReloj = sesion;
+  relojQuiz = setInterval(() => {
+    if (!sesion || sesion !== sesionDelReloj || quiz !== q) { detenerRelojQuiz(); return; }
+    const restante = Math.max(0, Math.ceil((q.finMs - Date.now()) / 1000));
+    if (restante !== mostrado) { mostrado = restante; pintarRelojQuiz(restante); }
+    if (restante <= 10 && restante > 0 && !q.aviso10) {
+      q.aviso10 = true;
+      mostrarMensaje($('msg-estudio'), 'Quedan 10 segundos', true);
+    }
+    if (restante <= 0) tiempoQuizAgotado();
+  }, 250);
+}
+
+/** El reloj llegó a 0: las preguntas sin responder no se registran; se muestra el resumen. */
+function tiempoQuizAgotado() {
+  const q = quizDeSesion();
+  if (!q) { detenerRelojQuiz(); return; }
+  q.usado = q.segundos;
+  const r = resumenQuiz({ aciertos: sesionAciertos, fallos: sesionFallos, totalPreguntas: q.total });
+  q.motivo = r.sinResponder > 0 ? 'tiempo' : 'fin';
+  cancelarTemporizador();
+  $('grupo-opciones').querySelectorAll('button').forEach((b) => { b.disabled = true; });
+  $('btn-revelar').disabled = true;
+  if (q.motivo === 'tiempo') mostrarMensaje($('msg-estudio'), '¡Se acabó el tiempo!', true);
+  mostrarResumen();
 }
 
 function actualizarTemporizadorUI() {
@@ -578,8 +709,8 @@ function actualizarTemporizadorUI() {
 }
 
 function iniciarTemporizadorSiAplica() {
-  cancelarTemporizador();
-  if (!$('chk-examen').checked || sesion.terminado() || sesion.marcadas.has(sesion.indice)) return;
+  cancelarTemporizadorTarjeta();
+  if (quizDeSesion() || !$('chk-examen').checked || sesion.terminado() || sesion.marcadas.has(sesion.indice)) return;
   segundosRestantes = Number($('examen-segundos').value) || 20;
   actualizarTemporizadorUI();
   temporizador = setInterval(() => {
@@ -592,7 +723,7 @@ function iniciarTemporizadorSiAplica() {
 /** Tiempo agotado o "No lo sé" cuentan como fallo (RF-08); tocar la tarjeta solo muestra la respuesta. */
 function registrarFalloRevelado(textoMensaje) {
   if (!sesion || sesion.marcadas.has(sesion.indice)) return;
-  cancelarTemporizador();
+  cancelarTemporizadorTarjeta();
   const v = sesion.revelar();
   const r = app.marcar(mazoActual, sesion, false);
   if (!r.ok) return;
@@ -604,6 +735,11 @@ function registrarFalloRevelado(textoMensaje) {
   $('tarjeta').classList.add('resultado-fallo');
   reproducirSonido('fallo');
   mostrarMensaje($('msg-estudio'), textoMensaje(v.respuesta), true);
+  if (quizDeSesion()) {
+    if (sesion.esUltima()) detenerRelojQuiz();
+    programarAvance(RETRASO_QUIZ_MS);
+    return;
+  }
   $('btn-siguiente').focus();
 }
 
@@ -631,14 +767,18 @@ function limpiarMensaje() {
 }
 
 /** Arranca una sesión de estudio sobre `tarjetas` (ya ordenadas) y reinicia los contadores de la sesión. */
-function iniciarSesionSobre(tarjetas) {
+function iniciarSesionSobre(tarjetas, { esQuiz = false } = {}) {
   const r = SesionEstudio.iniciar({ tarjetas });
   if (!r.ok) return r;
+  cancelarTemporizador();
   ordenEstudio = tarjetas;
   erroresSesion = [];
   sesionAciertos = 0;
   sesionFallos = 0;
   sesion = r.sesion;
+  quiz = esQuiz
+    ? { sesion, total: tarjetas.length, segundos: segundosQuiz(), inicioMs: null, finMs: null, usado: null, motivo: null, aviso10: false }
+    : null;
   $('aviso-vacio').hidden = true;
   $('btn-empezar-neutral').hidden = true;
   $('seccion-presentacion').hidden = true;
@@ -647,6 +787,7 @@ function iniciarSesionSobre(tarjetas) {
   limpiarMensaje();
   pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
+  iniciarRelojQuiz();
   enfocarInicioTarjeta();
   return r;
 }
@@ -782,8 +923,9 @@ $('form-tarjeta').onsubmit = (e) => {
 function empezarEstudio() {
   actualizarDisponibilidadOpciones();
   const mazo = app.obtenerMazo(mazoActual);
-  const tarjetas = barajar(mazo.tarjetas);
-  const r = iniciarSesionSobre(tarjetas);
+  const esQuiz = $('chk-quiz').checked && !$('chk-quiz').disabled;
+  const tarjetas = esQuiz ? elegirPreguntasQuiz(mazo.tarjetas, PREGUNTAS_QUIZ) : barajar(mazo.tarjetas);
+  const r = iniciarSesionSobre(tarjetas, { esQuiz });
   if (!r.ok) {
     sesion = null;
     cancelarTemporizador();
@@ -829,6 +971,7 @@ function abrirPresentacion(paraEstudiar) {
     clearTimeout(avanceAuto);
     avanceAuto = null;
     if (sesion.esUltima()) {
+      detenerRelojQuiz();
       resumenActivo = true;
     } else {
       sesion.siguiente();
@@ -872,6 +1015,7 @@ $('btn-cerrar-presentacion').onclick = () => {
   }
   $('seccion-presentacion').hidden = true;
   if (resumenActivo) { mostrarResumen(); return; }
+  if (quizDeSesion() || $('chk-quiz').checked) { empezarEstudio(); return; }
   $('seccion-estudio').hidden = false;
   pintarTarjetaEstudio();
   iniciarTemporizadorSiAplica();
